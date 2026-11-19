@@ -59,7 +59,6 @@ class _CanvasViewportState extends State<CanvasViewport> {
         event.buttons & kPrimaryMouseButton != 0;
 
     if (isMiddleMouse || isSpaceDrag) {
-      _focusNode.requestFocus();
       setState(() {
         _isPanning = true;
         _lastPointerPosition = event.localPosition;
