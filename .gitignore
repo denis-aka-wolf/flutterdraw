@@ -1,0 +1,27 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Generated platform files
+**/GeneratedPluginRegistrant.*
+
+# Signing and local configuration
+*.jks
+*.keystore
+key.properties
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
