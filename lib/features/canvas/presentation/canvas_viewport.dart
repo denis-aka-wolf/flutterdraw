@@ -50,6 +50,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
   }
 
   void _handlePointerDown(PointerDownEvent event) {
+    _focusNode.requestFocus();
+
     final isMiddleMouse = event.kind == PointerDeviceKind.mouse &&
         event.buttons & kMiddleMouseButton != 0;
     final isSpaceDrag = event.kind == PointerDeviceKind.mouse &&
@@ -116,6 +118,12 @@ class _CanvasViewportState extends State<CanvasViewport> {
     _lastPanZoomScale = 1;
   }
 
+  void _handleFocusChange(bool hasFocus) {
+    if (!hasFocus) {
+      _spacePressed = false;
+    }
+  }
+
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event.logicalKey == LogicalKeyboardKey.space) {
       if (event is KeyDownEvent) {
@@ -140,6 +148,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
+      onFocusChange: _handleFocusChange,
       onKeyEvent: _handleKeyEvent,
       child: MouseRegion(
         cursor: _isPanning ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
