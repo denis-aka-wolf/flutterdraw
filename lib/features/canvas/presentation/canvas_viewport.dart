@@ -23,6 +23,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
   bool _spacePressed = false;
   bool _isPanning = false;
   Offset? _lastPointerPosition;
+  Offset? _lastPanZoomOffset;
+  double _lastPanZoomScale = 1;
 
   @override
   void dispose() {
@@ -83,10 +85,35 @@ class _CanvasViewportState extends State<CanvasViewport> {
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
 
-    // A conventional mouse wheel zooms around the cursor. Trackpad scroll
-    // gestures are handled separately by Flutter's pointer-pan-zoom events.
+    // A conventional mouse wheel zooms around the cursor.
     final factor = math.exp(-event.scrollDelta.dy * 0.0015);
     _zoomAt(event.localPosition, factor);
+  }
+
+  void _handlePanZoomStart(PointerPanZoomStartEvent event) {
+    _lastPanZoomOffset = Offset.zero;
+    _lastPanZoomScale = 1;
+  }
+
+  void _handlePanZoomUpdate(PointerPanZoomUpdateEvent event) {
+    final previousOffset = _lastPanZoomOffset ?? Offset.zero;
+    final panDelta = event.pan - previousOffset;
+    final scaleFactor = event.scale / _lastPanZoomScale;
+
+    _lastPanZoomOffset = event.pan;
+    _lastPanZoomScale = event.scale;
+
+    if (panDelta != Offset.zero) {
+      _panBy(panDelta);
+    }
+    if (scaleFactor.isFinite && scaleFactor > 0 && scaleFactor != 1) {
+      _zoomAt(event.localPosition, scaleFactor);
+    }
+  }
+
+  void _handlePanZoomEnd(PointerPanZoomEndEvent event) {
+    _lastPanZoomOffset = null;
+    _lastPanZoomScale = 1;
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -123,6 +150,9 @@ class _CanvasViewportState extends State<CanvasViewport> {
           onPointerUp: _handlePointerUp,
           onPointerCancel: _handlePointerUp,
           onPointerSignal: _handlePointerSignal,
+          onPointerPanZoomStart: _handlePanZoomStart,
+          onPointerPanZoomUpdate: _handlePanZoomUpdate,
+          onPointerPanZoomEnd: _handlePanZoomEnd,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final size = Size(
