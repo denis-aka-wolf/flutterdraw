@@ -22,7 +22,9 @@ class DrawingElement {
     this.strokeColor = 0xFF252525,
     this.strokeWidth = 2,
     this.roughness = 1,
-  }) : points = List.unmodifiable(points);
+    Map<String, Object?> extraData = const {},
+  })  : points = List.unmodifiable(points),
+        extraData = Map.unmodifiable(extraData);
 
   final String id;
   final DrawingElementType type;
@@ -35,6 +37,9 @@ class DrawingElement {
   final int strokeColor;
   final double strokeWidth;
   final double roughness;
+
+  /// Fields unknown to this version of FlutterDraw, retained for round trips.
+  final Map<String, Object?> extraData;
 
   double get left => x < x + width ? x : x + width;
   double get top => y < y + height ? y : y + height;
@@ -116,6 +121,7 @@ class DrawingElement {
     int? strokeColor,
     double? strokeWidth,
     double? roughness,
+    Map<String, Object?>? extraData,
   }) {
     return DrawingElement(
       id: id ?? this.id,
@@ -129,6 +135,7 @@ class DrawingElement {
       strokeColor: strokeColor ?? this.strokeColor,
       strokeWidth: strokeWidth ?? this.strokeWidth,
       roughness: roughness ?? this.roughness,
+      extraData: extraData ?? this.extraData,
     );
   }
 }
