@@ -253,6 +253,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
                       elements: widget.controller.document.elements,
                       preview: widget.controller.drawingPreview,
                       selection: widget.controller.selectionBounds,
+                      showResizeHandles: widget.controller.canResizeSelection,
                       marquee: widget.controller.marqueeBounds,
                     ),
                   );
@@ -274,6 +275,7 @@ class _CanvasPainter extends CustomPainter {
     required this.elements,
     required this.preview,
     required this.selection,
+    required this.showResizeHandles,
     required this.marquee,
   });
 
@@ -283,6 +285,7 @@ class _CanvasPainter extends CustomPainter {
   final List<DrawingElement> elements;
   final DrawingElement? preview;
   final SelectionBounds? selection;
+  final bool showResizeHandles;
   final SelectionBounds? marquee;
 
   @override
@@ -471,6 +474,7 @@ class _CanvasPainter extends CustomPainter {
       ..strokeWidth = 1 / scale;
     canvas.drawRect(rect, outline);
 
+    if (!showResizeHandles) return;
     final fill = Paint()..color = Colors.white;
     final border = Paint()
       ..color = const Color(0xFF3578E5)
@@ -524,5 +528,6 @@ class _CanvasPainter extends CustomPainter {
       oldDelegate.elements != elements ||
       oldDelegate.preview != preview ||
       oldDelegate.selection != selection ||
+      oldDelegate.showResizeHandles != showResizeHandles ||
       oldDelegate.marquee != marquee;
 }
