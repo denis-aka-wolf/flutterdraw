@@ -204,6 +204,12 @@ class _ToolRail extends StatelessWidget {
               ),
               _ToolButton(
                 controller: controller,
+                tool: CanvasTool.text,
+                icon: Icons.text_fields,
+                tooltip: 'Текст',
+              ),
+              _ToolButton(
+                controller: controller,
                 tool: CanvasTool.freehand,
                 icon: Icons.gesture,
                 tooltip: 'Рисование от руки',
@@ -253,7 +259,9 @@ class _ToolButton extends StatelessWidget {
 }
 
 class _InspectorPanel extends StatelessWidget {
-  const _InspectorPanel();
+  const _InspectorPanel({required this.controller});
+
+  final CanvasEditorController controller;
 
   @override
   Widget build(BuildContext context) {

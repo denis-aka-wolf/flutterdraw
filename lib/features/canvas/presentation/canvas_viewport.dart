@@ -73,6 +73,10 @@ class _CanvasViewportState extends State<CanvasViewport> {
     }
 
     if (event.buttons & kPrimaryMouseButton == 0) return;
+    if (widget.controller.activeTool == CanvasTool.text) {
+      _showTextDialog(_toWorld(event.localPosition));
+      return;
+    }
     if (widget.controller.activeTool == CanvasTool.select ||
         widget.controller.activeTool == CanvasTool.rectangle ||
         widget.controller.activeTool == CanvasTool.ellipse ||
@@ -372,6 +376,21 @@ class _CanvasPainter extends CustomPainter {
     DrawingElement element, {
     double opacity = 1,
   }) {
+    if (element.type == DrawingElementType.text) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: element.text,
+          style: TextStyle(
+            color: Color(element.strokeColor).withOpacity(opacity),
+            fontSize: element.fontSize,
+            height: 1.2,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: math.max(40.0, element.width));
+      painter.paint(canvas, Offset(element.x, element.y));
+      return;
+    }
     if (element.type == DrawingElementType.line ||
         element.type == DrawingElementType.arrow ||
         element.type == DrawingElementType.freehand) {
@@ -409,6 +428,7 @@ class _CanvasPainter extends CustomPainter {
       case DrawingElementType.line:
       case DrawingElementType.arrow:
       case DrawingElementType.freehand:
+      case DrawingElementType.text:
         break;
     }
     path.close();
