@@ -77,10 +77,10 @@ class CanvasEditorController extends ChangeNotifier {
     final end = _marqueeEnd;
     if (start == null || end == null || !isMarqueeSelecting) return null;
     return SelectionBounds(
-      math.min(start.x, end.x),
-      math.min(start.y, end.y),
-      math.max(start.x, end.x),
-      math.max(start.y, end.y),
+      start.x < end.x ? start.x : end.x,
+      start.y < end.y ? start.y : end.y,
+      start.x > end.x ? start.x : end.x,
+      start.y > end.y ? start.y : end.y,
     );
   }
 
