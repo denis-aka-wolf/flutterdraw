@@ -55,6 +55,24 @@ void main() {
       controller.dispose();
     });
 
+    test('shift-style marquee adds to the existing selection', () {
+      final controller = makeControllerWithRectangle();
+      controller.setActiveTool(CanvasTool.ellipse);
+      controller.pointerDown(const Point2(140, 20));
+      controller.pointerUp(const Point2(180, 60));
+      controller.setActiveTool(CanvasTool.select);
+
+      controller.pointerDown(
+        const Point2(130, 10),
+        additiveSelection: true,
+      );
+      controller.pointerMove(const Point2(190, 70));
+      controller.pointerUp(const Point2(190, 70));
+
+      expect(controller.selectedElementIds.length, 2);
+      controller.dispose();
+    });
+
     test('copies and pastes selected elements with new ids', () {
       final controller = makeControllerWithRectangle();
       controller.pointerDown(const Point2(50, 60));
