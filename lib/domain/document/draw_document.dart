@@ -1,28 +1,30 @@
-import '../elements/rectangle_element.dart';
+import '../elements/drawing_element.dart';
 
-/// Immutable snapshot of the objects that make up a drawing.
 class DrawDocument {
-  DrawDocument({List<RectangleElement> rectangles = const []})
-      : rectangles = List.unmodifiable(rectangles);
+  DrawDocument({List<DrawingElement> elements = const []})
+      : elements = List.unmodifiable(elements);
 
-  final List<RectangleElement> rectangles;
+  final List<DrawingElement> elements;
 
-  DrawDocument addRectangle(RectangleElement rectangle) {
-    return DrawDocument(rectangles: [...rectangles, rectangle]);
-  }
+  DrawDocument addElement(DrawingElement element) =>
+      DrawDocument(elements: [...elements, element]);
 
-  DrawDocument removeElement(String id) {
+  DrawDocument removeElements(Set<String> ids) => DrawDocument(
+        elements: elements.where((element) => !ids.contains(element.id)).toList(),
+      );
+
+  DrawDocument replaceElement(DrawingElement element) => DrawDocument(
+        elements: [
+          for (final current in elements)
+            if (current.id == element.id) element else current,
+        ],
+      );
+
+  DrawDocument reorder(Set<String> ids, {required bool toFront}) {
+    final moving = elements.where((e) => ids.contains(e.id)).toList();
+    final remaining = elements.where((e) => !ids.contains(e.id)).toList();
     return DrawDocument(
-      rectangles: rectangles.where((element) => element.id != id).toList(),
-    );
-  }
-
-  DrawDocument replaceRectangle(RectangleElement rectangle) {
-    return DrawDocument(
-      rectangles: [
-        for (final current in rectangles)
-          if (current.id == rectangle.id) rectangle else current,
-      ],
+      elements: toFront ? [...remaining, ...moving] : [...moving, ...remaining],
     );
   }
 }
