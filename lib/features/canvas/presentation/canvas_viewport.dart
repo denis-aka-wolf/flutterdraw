@@ -4,24 +4,30 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../application/canvas/canvas_editor_controller.dart';
+import '../../../application/canvas/canvas_tool.dart';
 import '../../../core/geometry/viewport_transform.dart';
+import '../../../domain/elements/rectangle_element.dart';
 
 class CanvasViewport extends StatefulWidget {
-  const CanvasViewport({super.key});
+  const CanvasViewport({
+    required this.controller,
+    super.key,
+  });
+
+  final CanvasEditorController controller;
 
   @override
   State<CanvasViewport> createState() => _CanvasViewportState();
 }
 
 class _CanvasViewportState extends State<CanvasViewport> {
-  ViewportTransform _transform = const ViewportTransform(
-    translation: Point2(0, 0),
-  );
-
+  ViewportTransform _transform = const ViewportTransform();
   final FocusNode _focusNode = FocusNode(debugLabel: 'FlutterDraw canvas');
 
   bool _spacePressed = false;
   bool _isPanning = false;
+  int? _drawingPointer;
   Offset? _lastPointerPosition;
   Offset? _lastPanZoomOffset;
   double _lastPanZoomScale = 1;
@@ -34,7 +40,6 @@ class _CanvasViewportState extends State<CanvasViewport> {
 
   void _panBy(Offset delta) {
     if (delta == Offset.zero) return;
-
     setState(() {
       _transform = _transform.panBy(Point2(delta.dx, delta.dy));
     });
@@ -49,44 +54,80 @@ class _CanvasViewportState extends State<CanvasViewport> {
     });
   }
 
+  Point2 _toWorld(Offset localPosition) {
+    return _transform.screenToWorld(
+      Point2(localPosition.dx, localPosition.dy),
+    );
+  }
+
   void _handlePointerDown(PointerDownEvent event) {
     _focusNode.requestFocus();
 
-    final isMiddleMouse = event.kind == PointerDeviceKind.mouse &&
-        event.buttons & kMiddleMouseButton != 0;
-    final isSpaceDrag = event.kind == PointerDeviceKind.mouse &&
-        _spacePressed &&
-        event.buttons & kPrimaryMouseButton != 0;
+    final isMouse = event.kind == PointerDeviceKind.mouse;
+    final isMiddleMouse =
+        isMouse && event.buttons & kMiddleMouseButton != 0;
+    final isSpaceDrag =
+        isMouse && _spacePressed && event.buttons & kPrimaryMouseButton != 0;
 
-    if (isMiddleMouse || isSpaceDrag) {
+    if (isMiddleMouse || isSpaceDrag ||
+        widget.controller.activeTool == CanvasTool.hand) {
       setState(() {
         _isPanning = true;
         _lastPointerPosition = event.localPosition;
       });
+      return;
+    }
+
+    final isPrimaryPointer = event.buttons & kPrimaryMouseButton != 0;
+    if (isPrimaryPointer &&
+        widget.controller.activeTool == CanvasTool.rectangle) {
+      _drawingPointer = event.pointer;
+      widget.controller.pointerDown(_toWorld(event.localPosition));
     }
   }
 
   void _handlePointerMove(PointerMoveEvent event) {
-    if (!_isPanning || _lastPointerPosition == null) return;
+    if (_isPanning && _lastPointerPosition != null) {
+      final delta = event.localPosition - _lastPointerPosition!;
+      _lastPointerPosition = event.localPosition;
+      _panBy(delta);
+      return;
+    }
 
-    final delta = event.localPosition - _lastPointerPosition!;
-    _lastPointerPosition = event.localPosition;
-    _panBy(delta);
+    if (_drawingPointer == event.pointer) {
+      widget.controller.pointerMove(_toWorld(event.localPosition));
+    }
   }
 
   void _handlePointerUp(PointerEvent event) {
-    if (!_isPanning) return;
+    if (_isPanning) {
+      setState(() {
+        _isPanning = false;
+        _lastPointerPosition = null;
+      });
+    }
 
-    setState(() {
-      _isPanning = false;
-      _lastPointerPosition = null;
-    });
+    if (_drawingPointer == event.pointer) {
+      _drawingPointer = null;
+      widget.controller.pointerUp(_toWorld(event.localPosition));
+    }
+  }
+
+  void _handlePointerCancel(PointerEvent event) {
+    if (_drawingPointer == event.pointer) {
+      _drawingPointer = null;
+      widget.controller.cancelGesture();
+    }
+    if (_isPanning) {
+      setState(() {
+        _isPanning = false;
+        _lastPointerPosition = null;
+      });
+    }
   }
 
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
-
-    // A conventional mouse wheel zooms around the cursor.
     final factor = math.exp(-event.scrollDelta.dy * 0.0015);
     _zoomAt(event.localPosition, factor);
   }
@@ -104,9 +145,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
     _lastPanZoomOffset = event.pan;
     _lastPanZoomScale = event.scale;
 
-    if (panDelta != Offset.zero) {
-      _panBy(panDelta);
-    }
+    if (panDelta != Offset.zero) _panBy(panDelta);
     if (scaleFactor.isFinite && scaleFactor > 0 && scaleFactor != 1) {
       _zoomAt(event.localPosition, scaleFactor);
     }
@@ -118,9 +157,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
   }
 
   void _handleFocusChange(bool hasFocus) {
-    if (!hasFocus) {
-      _spacePressed = false;
-    }
+    if (!hasFocus) _spacePressed = false;
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -144,37 +181,47 @@ class _CanvasViewportState extends State<CanvasViewport> {
     final dotColor =
         isDark ? const Color(0xFF41434A) : const Color(0xFFD5D6DC);
 
+    final cursor = _isPanning
+        ? SystemMouseCursors.grabbing
+        : widget.controller.activeTool == CanvasTool.rectangle
+            ? SystemMouseCursors.precise
+            : SystemMouseCursors.grab;
+
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
       onFocusChange: _handleFocusChange,
       onKeyEvent: _handleKeyEvent,
       child: MouseRegion(
-        cursor: _isPanning ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
+        cursor: cursor,
         child: Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: _handlePointerDown,
           onPointerMove: _handlePointerMove,
           onPointerUp: _handlePointerUp,
-          onPointerCancel: _handlePointerUp,
+          onPointerCancel: _handlePointerCancel,
           onPointerSignal: _handlePointerSignal,
           onPointerPanZoomStart: _handlePanZoomStart,
           onPointerPanZoomUpdate: _handlePanZoomUpdate,
           onPointerPanZoomEnd: _handlePanZoomEnd,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final size = Size(
-                constraints.maxWidth,
-                constraints.maxHeight,
-              );
+              final size = Size(constraints.maxWidth, constraints.maxHeight);
 
-              return CustomPaint(
-                size: size,
-                painter: _CanvasGridPainter(
-                  transform: _transform,
-                  backgroundColor: backgroundColor,
-                  dotColor: dotColor,
-                ),
+              return AnimatedBuilder(
+                animation: widget.controller,
+                builder: (context, _) {
+                  return CustomPaint(
+                    size: size,
+                    painter: _CanvasPainter(
+                      transform: _transform,
+                      backgroundColor: backgroundColor,
+                      dotColor: dotColor,
+                      rectangles: widget.controller.document.rectangles,
+                      preview: widget.controller.rectanglePreview,
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -184,27 +231,46 @@ class _CanvasViewportState extends State<CanvasViewport> {
   }
 }
 
-class _CanvasGridPainter extends CustomPainter {
-  const _CanvasGridPainter({
+class _CanvasPainter extends CustomPainter {
+  const _CanvasPainter({
     required this.transform,
     required this.backgroundColor,
     required this.dotColor,
+    required this.rectangles,
+    required this.preview,
   });
 
   final ViewportTransform transform;
   final Color backgroundColor;
   final Color dotColor;
+  final List<RectangleElement> rectangles;
+  final RectangleElement? preview;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawColor(backgroundColor, BlendMode.src);
-
     if (size.isEmpty) return;
 
+    _paintGrid(canvas, size);
+
+    canvas.save();
+    canvas.translate(transform.translation.x, transform.translation.y);
+    canvas.scale(transform.scale);
+
+    for (final rectangle in rectangles) {
+      _paintRectangle(canvas, rectangle);
+    }
+    if (preview != null) {
+      _paintRectangle(canvas, preview!, isPreview: true);
+    }
+
+    canvas.restore();
+  }
+
+  void _paintGrid(Canvas canvas, Size size) {
     final topLeft = transform.screenToWorld(const Point2(0, 0));
-    final bottomRight = transform.screenToWorld(
-      Point2(size.width, size.height),
-    );
+    final bottomRight =
+        transform.screenToWorld(Point2(size.width, size.height));
 
     var gridStep = 24.0;
     while (gridStep * transform.scale < 14) {
@@ -226,22 +292,73 @@ class _CanvasGridPainter extends CustomPainter {
       for (var worldY = firstY;
           worldY <= bottomRight.y + gridStep;
           worldY += gridStep) {
-        final screenPoint =
-            transform.worldToScreen(Point2(worldX, worldY));
-        canvas.drawCircle(
-          Offset(screenPoint.x, screenPoint.y),
-          1.1,
-          paint,
-        );
+        final point = transform.worldToScreen(Point2(worldX, worldY));
+        canvas.drawCircle(Offset(point.x, point.y), 1.1, paint);
       }
     }
   }
 
+  void _paintRectangle(
+    Canvas canvas,
+    RectangleElement rectangle, {
+    bool isPreview = false,
+  }) {
+    if (rectangle.width <= 0 || rectangle.height <= 0) return;
+
+    final random = math.Random(rectangle.seed);
+    final path = Path();
+    final corners = <Offset>[
+      Offset(rectangle.x, rectangle.y),
+      Offset(rectangle.x + rectangle.width, rectangle.y),
+      Offset(rectangle.x + rectangle.width, rectangle.y + rectangle.height),
+      Offset(rectangle.x, rectangle.y + rectangle.height),
+    ];
+
+    for (var side = 0; side < corners.length; side++) {
+      final start = corners[side];
+      final end = corners[(side + 1) % corners.length];
+      final segments = 5;
+
+      if (side == 0) path.moveTo(start.dx, start.dy);
+      for (var segment = 1; segment <= segments; segment++) {
+        final t = segment / segments;
+        var x = start.dx + (end.dx - start.dx) * t;
+        var y = start.dy + (end.dy - start.dy) * t;
+
+        if (segment < segments && rectangle.roughness > 0) {
+          final jitter = (random.nextDouble() * 2 - 1) *
+              rectangle.roughness;
+          final dx = end.dx - start.dx;
+          final dy = end.dy - start.dy;
+          final length = math.sqrt(dx * dx + dy * dy);
+          if (length > 0) {
+            x += -dy / length * jitter;
+            y += dx / length * jitter;
+          }
+        }
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+
+    final paint = Paint()
+      ..color = Color(rectangle.strokeColor)
+          .withOpacity(isPreview ? 0.72 : 1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = rectangle.strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, paint);
+  }
+
   @override
-  bool shouldRepaint(covariant _CanvasGridPainter oldDelegate) {
+  bool shouldRepaint(covariant _CanvasPainter oldDelegate) {
     return oldDelegate.transform.scale != transform.scale ||
         oldDelegate.transform.translation != transform.translation ||
         oldDelegate.backgroundColor != backgroundColor ||
-        oldDelegate.dotColor != dotColor;
+        oldDelegate.dotColor != dotColor ||
+        oldDelegate.rectangles != rectangles ||
+        oldDelegate.preview != preview;
   }
 }

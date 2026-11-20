@@ -1,9 +1,30 @@
 import 'package:flutter/material.dart';
 
+import '../../../application/canvas/canvas_editor_controller.dart';
+import '../../../application/canvas/canvas_tool.dart';
 import '../../canvas/presentation/canvas_viewport.dart';
 
-class WorkspaceScreen extends StatelessWidget {
+class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key});
+
+  @override
+  State<WorkspaceScreen> createState() => _WorkspaceScreenState();
+}
+
+class _WorkspaceScreenState extends State<WorkspaceScreen> {
+  late final CanvasEditorController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CanvasEditorController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +36,13 @@ class WorkspaceScreen extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  const _ToolRail(),
+                  _ToolRail(controller: _controller),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: const CanvasViewport(),
+                        child: CanvasViewport(controller: _controller),
                       ),
                     ),
                   ),
@@ -29,7 +50,7 @@ class WorkspaceScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const _StatusBar(),
+            _StatusBar(controller: _controller),
           ],
         ),
       ),
@@ -64,7 +85,7 @@ class _WorkspaceHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(width: 24),
-          Text('Без названия'),
+          const Text('Без названия'),
           const Spacer(),
           IconButton(
             tooltip: 'Отменить',
@@ -89,43 +110,102 @@ class _WorkspaceHeader extends StatelessWidget {
 }
 
 class _ToolRail extends StatelessWidget {
-  const _ToolRail();
+  const _ToolRail({required this.controller});
 
-  static const tools = <(IconData, String)>[
-    (Icons.ads_click, 'Выбор'),
-    (Icons.pan_tool_alt_outlined, 'Рука'),
-    (Icons.rectangle_outlined, 'Прямоугольник'),
-    (Icons.circle_outlined, 'Эллипс'),
-    (Icons.diamond_outlined, 'Ромб'),
-    (Icons.timeline, 'Линия'),
-    (Icons.arrow_right_alt, 'Стрелка'),
-    (Icons.gesture, 'Рисование'),
-    (Icons.title, 'Текст'),
-    (Icons.image_outlined, 'Изображение'),
-  ];
+  final CanvasEditorController controller;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       width: 64,
       margin: const EdgeInsets.fromLTRB(12, 12, 0, 12),
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          for (final tool in tools)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: IconButton(
-                tooltip: tool.$2,
-                onPressed: null,
-                icon: Icon(tool.$1),
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          return Column(
+            children: [
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.select,
+                icon: Icons.ads_click,
+                tooltip: 'Выбор',
+                enabled: false,
               ),
-            ),
-        ],
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.hand,
+                icon: Icons.pan_tool_alt_outlined,
+                tooltip: 'Рука',
+              ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.rectangle,
+                icon: Icons.rectangle_outlined,
+                tooltip: 'Прямоугольник',
+              ),
+              for (final item in const <(IconData, String)>[
+                (Icons.circle_outlined, 'Эллипс'),
+                (Icons.diamond_outlined, 'Ромб'),
+                (Icons.timeline, 'Линия'),
+                (Icons.arrow_right_alt, 'Стрелка'),
+                (Icons.gesture, 'Рисование'),
+                (Icons.title, 'Текст'),
+                (Icons.image_outlined, 'Изображение'),
+              ])
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: IconButton(
+                    tooltip: item.$2,
+                    onPressed: null,
+                    icon: Icon(item.$1),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ToolButton extends StatelessWidget {
+  const _ToolButton({
+    required this.controller,
+    required this.tool,
+    required this.icon,
+    required this.tooltip,
+    this.enabled = true,
+  });
+
+  final CanvasEditorController controller;
+  final CanvasTool tool;
+  final IconData icon;
+  final String tooltip;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = controller.activeTool == tool;
+    final colors = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: enabled ? () => controller.setActiveTool(tool) : null,
+        style: IconButton.styleFrom(
+          backgroundColor: selected ? colors.secondaryContainer : null,
+          foregroundColor:
+              selected ? colors.onSecondaryContainer : colors.onSurface,
+        ),
+        icon: Icon(icon),
       ),
     );
   }
@@ -162,7 +242,9 @@ class _InspectorPanel extends StatelessWidget {
 }
 
 class _StatusBar extends StatelessWidget {
-  const _StatusBar();
+  const _StatusBar({required this.controller});
+
+  final CanvasEditorController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -170,12 +252,21 @@ class _StatusBar extends StatelessWidget {
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       color: Theme.of(context).colorScheme.surface,
-      child: Row(
-        children: [
-          Text('Готово', style: Theme.of(context).textTheme.labelSmall),
-          const Spacer(),
-          Text('100%', style: Theme.of(context).textTheme.labelSmall),
-        ],
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          final count = controller.document.rectangles.length;
+          return Row(
+            children: [
+              Text('Готово', style: Theme.of(context).textTheme.labelSmall),
+              const Spacer(),
+              Text(
+                '$count объектов',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
