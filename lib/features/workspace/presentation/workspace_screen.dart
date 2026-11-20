@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
+import '../../canvas/presentation/canvas_help_overlay.dart';
 import '../../canvas/presentation/canvas_viewport.dart';
 
 class WorkspaceScreen extends StatefulWidget {
@@ -42,7 +43,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       padding: const EdgeInsets.all(12),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: CanvasViewport(controller: _controller),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CanvasViewport(controller: _controller),
+                            const Positioned(
+                              top: 10,
+                              right: 10,
+                              child: CanvasHelpOverlay(),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
