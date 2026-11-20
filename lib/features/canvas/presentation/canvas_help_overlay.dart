@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Компактная справка по управлению холстом.
+/// Компактная справка по управлению холстом с сохранением размера.
 class CanvasHelpOverlay extends StatefulWidget {
   const CanvasHelpOverlay({super.key});
 
@@ -9,12 +10,62 @@ class CanvasHelpOverlay extends StatefulWidget {
 }
 
 class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
+  static const _widthKey = 'canvas_help_overlay_width';
+  static const _heightKey = 'canvas_help_overlay_height';
+  static const double _defaultWidth = 260;
+  static const double _defaultHeight = 360;
+  static const double _minWidth = 230;
+  static const double _minHeight = 250;
+  static const double _maxWidth = 420;
+  static const double _maxHeight = 620;
+
   bool _expanded = false;
+  bool _settingsLoaded = false;
+  double _panelWidth = _defaultWidth;
+  double _panelHeight = _defaultHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSize();
+  }
+
+  Future<void> _loadSize() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _panelWidth = (prefs.getDouble(_widthKey) ?? _defaultWidth)
+          .clamp(_minWidth, _maxWidth)
+          .toDouble();
+      _panelHeight = (prefs.getDouble(_heightKey) ?? _defaultHeight)
+          .clamp(_minHeight, _maxHeight)
+          .toDouble();
+      _settingsLoaded = true;
+    });
+  }
+
+  Future<void> _saveSize() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_widthKey, _panelWidth);
+    await prefs.setDouble(_heightKey, _panelHeight);
+  }
+
+  void _resize(DragUpdateDetails details) {
+    if (!_settingsLoaded) return;
+    setState(() {
+      // Ручка слева снизу: правый верхний угол панели остаётся на месте.
+      _panelWidth = (_panelWidth - details.delta.dx)
+          .clamp(_minWidth, _maxWidth)
+          .toDouble();
+      _panelHeight = (_panelHeight + details.delta.dy)
+          .clamp(_minHeight, _maxHeight)
+          .toDouble();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-
     return Align(
       alignment: Alignment.topRight,
       child: AnimatedSize(
@@ -32,10 +83,13 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
               border: Border.all(color: colors.outlineVariant.withOpacity(0.65)),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: SizedBox(
-              width: _expanded ? 232 : null,
-              child: _expanded ? _buildExpanded(context) : _buildCollapsed(context),
-            ),
+            child: _expanded
+                ? SizedBox(
+                    width: _panelWidth,
+                    height: _panelHeight,
+                    child: _buildExpanded(context),
+                  )
+                : _buildCollapsed(context),
           ),
         ),
       ),
@@ -56,7 +110,9 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
             const SizedBox(width: 7),
             Text(
               'Подсказка  >>>',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ),
@@ -67,23 +123,32 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
   Widget _buildExpanded(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 9),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline_rounded, size: 17, color: colors.primary),
+              Icon(Icons.lightbulb_outline_rounded,
+                  size: 17, color: colors.primary),
               const SizedBox(width: 7),
-              Text('Подсказки', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Подсказки',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              if (!_settingsLoaded)
+                const SizedBox(
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
             ],
           ),
           const SizedBox(height: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 280),
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,18 +181,48 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
             ),
           ),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 30,
-            child: OutlinedButton(
-              onPressed: () => setState(() => _expanded = false),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                visualDensity: VisualDensity.compact,
-                side: BorderSide(color: colors.outlineVariant),
+          Row(
+            children: [
+              Tooltip(
+                message: 'Потяните за угол, чтобы изменить размер',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanUpdate: _settingsLoaded ? _resize : null,
+                  onPanEnd: (_) => _saveSize(),
+                  child: SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      Icons.open_in_full_rounded,
+                      size: 16,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ),
-              child: const Text('Свернуть'),
-            ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: SizedBox(
+                  height: 30,
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => _expanded = false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      visualDensity: VisualDensity.compact,
+                      side: BorderSide(color: colors.outlineVariant),
+                    ),
+                    child: const Text('Свернуть'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${_panelWidth.round()}×${_panelHeight.round()}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -140,9 +235,9 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w700,
-        ),
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }
@@ -156,12 +251,22 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
         children: [
           Expanded(
             flex: 5,
-            child: Text(action, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
+            child: Text(
+              action,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const SizedBox(width: 6),
           Expanded(
             flex: 6,
-            child: Text(description, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            child: Text(
+              description,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ],
       ),
