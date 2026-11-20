@@ -425,9 +425,34 @@ class _CanvasPainter extends CustomPainter {
 
   void _paintStroke(Canvas canvas, DrawingElement element, double opacity) {
     if (element.points.isEmpty) return;
-    final path = Path()..moveTo(element.points.first.x, element.points.first.y);
-    for (var i = 1; i < element.points.length; i++) {
-      path.lineTo(element.points[i].x, element.points[i].y);
+    final path = Path();
+    if ((element.type == DrawingElementType.line ||
+            element.type == DrawingElementType.arrow) &&
+        element.points.length == 2) {
+      final start = element.points.first;
+      final end = element.points.last;
+      final dx = end.x - start.x;
+      final dy = end.y - start.y;
+      final length = math.sqrt(dx * dx + dy * dy);
+      final random = math.Random(element.seed);
+      const segments = 10;
+      path.moveTo(start.x, start.y);
+      for (var i = 1; i <= segments; i++) {
+        final t = i / segments;
+        var x = start.x + dx * t;
+        var y = start.y + dy * t;
+        if (i < segments && length > 0 && element.roughness > 0) {
+          final jitter = (random.nextDouble() * 2 - 1) * element.roughness;
+          x += -dy / length * jitter;
+          y += dx / length * jitter;
+        }
+        path.lineTo(x, y);
+      }
+    } else {
+      path.moveTo(element.points.first.x, element.points.first.y);
+      for (var i = 1; i < element.points.length; i++) {
+        path.lineTo(element.points[i].x, element.points[i].y);
+      }
     }
     final paint = _strokePaint(element, opacity);
     canvas.drawPath(path, paint);
