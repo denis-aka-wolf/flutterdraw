@@ -65,10 +65,10 @@ class CanvasEditorController extends ChangeNotifier {
     final selected = selectedElements;
     if (selected.isEmpty) return null;
     return SelectionBounds(
-      selected.map((e) => e.left).reduce(math.min),
-      selected.map((e) => e.top).reduce(math.min),
-      selected.map((e) => e.right).reduce(math.max),
-      selected.map((e) => e.bottom).reduce(math.max),
+      selected.map((e) => e.left).reduce((a, b) => a < b ? a : b),
+      selected.map((e) => e.top).reduce((a, b) => a < b ? a : b),
+      selected.map((e) => e.right).reduce((a, b) => a > b ? a : b),
+      selected.map((e) => e.bottom).reduce((a, b) => a > b ? a : b),
     );
   }
 
