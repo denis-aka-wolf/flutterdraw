@@ -16,7 +16,34 @@ Windows, macOS, Linux, Web, Android and iOS.
 
 ## Project status
 
-Early development. The first milestone is the cross-platform application shell and canvas foundation.
+Early development. The canvas foundation and first drawing/editing tools are implemented:
+
+- Rectangle, ellipse and diamond shapes.
+- Straight lines, arrows and freehand strokes.
+- Single and marquee multi-selection.
+- Moving and resizing selected shapes.
+- Copy, paste and duplicate.
+- Bring selected objects to front or send them to back.
+- Zoom, pan and adaptive canvas grid.
+
+Text, images, document persistence, undo/redo and Excalidraw import/export remain planned work.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| Space + drag | Pan the canvas |
+| Middle mouse + drag | Pan the canvas |
+| Mouse wheel | Zoom around the pointer |
+| Shift + click | Add/remove an element from selection |
+| Drag on empty canvas | Marquee selection |
+| Delete / Backspace | Delete selected elements |
+| Escape | Cancel current gesture and clear selection |
+| Ctrl/Cmd + C | Copy selected elements |
+| Ctrl/Cmd + V | Paste copied elements |
+| Ctrl/Cmd + D | Duplicate selected elements |
+| Ctrl/Cmd + ] | Bring selection to front |
+| Ctrl/Cmd + [ | Send selection to back |
 
 ## Architecture
 
