@@ -61,6 +61,15 @@ class CanvasEditorController extends ChangeNotifier {
       .where((element) => _selectedIds.contains(element.id))
       .toList(growable: false);
 
+  bool get canResizeSelection {
+    final selected = selectedElements;
+    if (selected.length != 1) return false;
+    final type = selected.single.type;
+    return type == DrawingElementType.rectangle ||
+        type == DrawingElementType.ellipse ||
+        type == DrawingElementType.diamond;
+  }
+
   SelectionBounds? get selectionBounds {
     final selected = selectedElements;
     if (selected.isEmpty) return null;
@@ -122,13 +131,10 @@ class CanvasEditorController extends ChangeNotifier {
     if (_activeTool != CanvasTool.select) return;
 
     final selectedBounds = selectionBounds;
-    if (_selectedIds.length == 1 && selectedBounds != null) {
+    if (canResizeSelection && selectedBounds != null) {
       final selected = selectedElements.single;
       final handle = _hitResizeHandle(selectedBounds, worldPosition, hitTolerance);
-      if (handle != null &&
-          (selected.type == DrawingElementType.rectangle ||
-              selected.type == DrawingElementType.ellipse ||
-              selected.type == DrawingElementType.diamond)) {
+      if (handle != null) {
         _gestureStart = worldPosition;
         _gestureOriginals = [selected];
         _activeResizeHandle = handle;
