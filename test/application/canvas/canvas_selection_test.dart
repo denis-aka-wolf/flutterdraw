@@ -61,6 +61,8 @@ void main() {
       controller.pointerDown(const Point2(140, 20));
       controller.pointerUp(const Point2(180, 60));
       controller.setActiveTool(CanvasTool.select);
+      controller.pointerDown(const Point2(50, 60));
+      controller.pointerUp(const Point2(50, 60));
 
       controller.pointerDown(
         const Point2(130, 10),
