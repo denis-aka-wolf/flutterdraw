@@ -41,7 +41,18 @@ class DrawingElement {
   double get right => x > x + width ? x : x + width;
   double get bottom => y > y + height ? y : y + height;
 
-  bool get isLargeEnough => width.abs() >= 2 || height.abs() >= 2;
+  bool get isLargeEnough {
+    switch (type) {
+      case DrawingElementType.rectangle:
+      case DrawingElementType.ellipse:
+      case DrawingElementType.diamond:
+        return width.abs() >= 2 && height.abs() >= 2;
+      case DrawingElementType.line:
+      case DrawingElementType.arrow:
+      case DrawingElementType.freehand:
+        return width.abs() >= 2 || height.abs() >= 2;
+    }
+  }
 
   factory DrawingElement.fromDrag({
     required String id,
