@@ -91,23 +91,17 @@ class _WorkspaceHeader extends StatelessWidget {
           const Spacer(),
           IconButton(
             tooltip: 'Дублировать (Ctrl+D)',
-            onPressed: controller.selectedElementIds.isEmpty
-                ? null
-                : controller.duplicateSelection,
+            onPressed: controller.duplicateSelection,
             icon: const Icon(Icons.copy_all_outlined),
           ),
           IconButton(
             tooltip: 'На передний план (Ctrl+])',
-            onPressed: controller.selectedElementIds.isEmpty
-                ? null
-                : controller.bringSelectionToFront,
+            onPressed: controller.bringSelectionToFront,
             icon: const Icon(Icons.flip_to_front),
           ),
           IconButton(
             tooltip: 'На задний план (Ctrl+[)',
-            onPressed: controller.selectedElementIds.isEmpty
-                ? null
-                : controller.sendSelectionToBack,
+            onPressed: controller.sendSelectionToBack,
             icon: const Icon(Icons.flip_to_back),
           ),
           IconButton(
