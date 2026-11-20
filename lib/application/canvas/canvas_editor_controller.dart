@@ -93,6 +93,62 @@ class CanvasEditorController extends ChangeNotifier {
     );
   }
 
+  void addText(Point2 position, String value, {double fontSize = 24}) {
+    final content = value.trim();
+    if (content.isEmpty) return;
+    _idCounter++;
+    final width = math.max(160.0, math.min(520.0, content.length * fontSize * 0.62));
+    final lines = content.split('\n').length;
+    final height = math.max(fontSize * 1.5, lines * fontSize * 1.45);
+    final element = DrawingElement(
+      id: 'element-$_idCounter',
+      type: DrawingElementType.text,
+      x: position.x,
+      y: position.y,
+      width: width,
+      height: height,
+      seed: _idCounter,
+      text: content,
+      fontSize: fontSize,
+      strokeColor: 0xFF252525,
+      roughness: 0,
+    );
+    _document = _document.addElement(element);
+    _selectedIds..clear()..add(element.id);
+    notifyListeners();
+  }
+
+  void updateSelectedText(String value) {
+    final selected = selectedElements;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final original = selected.single;
+    final content = value.trim();
+    if (content.isEmpty) {
+      deleteSelection();
+      return;
+    }
+    final height = math.max(original.fontSize * 1.5,
+        content.split('\n').length * original.fontSize * 1.45);
+    _document = _document.replaceElement(original.copyWith(
+      text: content,
+      height: height,
+    ));
+    notifyListeners();
+  }
+
+  void setSelectedTextFontSize(double value) {
+    final selected = selectedElements;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final original = selected.single;
+    final fontSize = value.clamp(10.0, 96.0).toDouble();
+    _document = _document.replaceElement(original.copyWith(
+      fontSize: fontSize,
+      height: math.max(fontSize * 1.5,
+          original.text.split('\n').length * fontSize * 1.45),
+    ));
+    notifyListeners();
+  }
+
   void setActiveTool(CanvasTool tool) {
     if (_activeTool == tool) return;
     _rollbackSelectionGesture();
@@ -339,6 +395,8 @@ class CanvasEditorController extends ChangeNotifier {
         return DrawingElementType.arrow;
       case CanvasTool.freehand:
         return DrawingElementType.freehand;
+      case CanvasTool.text:
+        return null;
       case CanvasTool.select:
       case CanvasTool.hand:
         return null;
@@ -361,7 +419,7 @@ class CanvasEditorController extends ChangeNotifier {
 
   DrawingElement? _hitTest(Point2 point, double tolerance) {
     for (final element in _document.elements.reversed) {
-      if (element.type == DrawingElementType.line ||
+      if (element.type == DrawingElementType.text) {\n        if (point.x >= element.left - tolerance && point.x <= element.right + tolerance &&\n            point.y >= element.top - tolerance && point.y <= element.bottom + tolerance) return element;\n      } else if (element.type == DrawingElementType.line ||
           element.type == DrawingElementType.arrow ||
           element.type == DrawingElementType.freehand) {
         for (var i = 1; i < element.points.length; i++) {

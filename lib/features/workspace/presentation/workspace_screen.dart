@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
-import '../../../application/canvas/canvas_tool.dart';
+import '../../../application/canvas/canvas_tool.dart';\nimport '../../../domain/elements/drawing_element.dart';
 import '../../canvas/presentation/canvas_help_overlay.dart';
 import '../../canvas/presentation/canvas_viewport.dart';
 
@@ -57,7 +57,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ),
                     ),
                   ),
-                  const _InspectorPanel(),
+                  _InspectorPanel(controller: _controller),
                 ],
               ),
             ),
@@ -265,18 +265,54 @@ class _InspectorPanel extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          Text(
-            'Выберите объект на холсте, чтобы изменить его свойства.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          final selected = controller.selectedElements;
+          final textElement = selected.length == 1 &&
+                  selected.single.type == DrawingElementType.text
+              ? selected.single
+              : null;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              if (textElement == null)
+                Text(
+                  'Выберите текстовый объект, чтобы изменить его содержимое и размер.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                )
+              else ...[
+                Text('Текст', style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 8),
+                TextFormField(
+                  key: ValueKey(textElement.id),
+                  initialValue: textElement.text,
+                  minLines: 3,
+                  maxLines: 7,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: controller.updateSelectedText,
                 ),
-          ),
-        ],
+                const SizedBox(height: 18),
+                Text('Размер шрифта: ${textElement.fontSize.round()}',
+                    style: Theme.of(context).textTheme.labelMedium),
+                Slider(
+                  min: 10,
+                  max: 72,
+                  divisions: 31,
+                  value: textElement.fontSize.clamp(10.0, 72.0).toDouble(),
+                  onChanged: controller.setSelectedTextFontSize,
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }

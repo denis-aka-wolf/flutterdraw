@@ -89,6 +89,43 @@ class _CanvasViewportState extends State<CanvasViewport> {
     }
   }
 
+  Future<void> _showTextDialog(Point2 position) async {
+    final textController = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Новый текст'),
+        content: SizedBox(
+          width: 360,
+          child: TextField(
+            controller: textController,
+            autofocus: true,
+            minLines: 2,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              hintText: 'Введите текст',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (value) => Navigator.of(dialogContext).pop(value),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(textController.text),
+            child: const Text('Добавить'),
+          ),
+        ],
+      ),
+    );
+    textController.dispose();
+    if (!mounted || value == null || value.trim().isEmpty) return;
+    widget.controller.addText(position, value);
+  }
+
   void _handlePointerMove(PointerMoveEvent event) {
     if (_isPanning && _lastPointerPosition != null) {
       final delta = event.localPosition - _lastPointerPosition!;

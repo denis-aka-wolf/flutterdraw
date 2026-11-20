@@ -7,6 +7,7 @@ enum DrawingElementType {
   line,
   arrow,
   freehand,
+  text,
 }
 
 class DrawingElement {
@@ -22,6 +23,8 @@ class DrawingElement {
     this.strokeColor = 0xFF252525,
     this.strokeWidth = 2,
     this.roughness = 1,
+    this.text = '',
+    this.fontSize = 24,
     Map<String, Object?> extraData = const {},
   })  : points = List.unmodifiable(points),
         extraData = Map.unmodifiable(extraData);
@@ -37,6 +40,8 @@ class DrawingElement {
   final int strokeColor;
   final double strokeWidth;
   final double roughness;
+  final String text;
+  final double fontSize;
 
   /// Fields unknown to this version of FlutterDraw, retained for round trips.
   final Map<String, Object?> extraData;
@@ -52,6 +57,8 @@ class DrawingElement {
       case DrawingElementType.ellipse:
       case DrawingElementType.diamond:
         return width.abs() >= 2 && height.abs() >= 2;
+      case DrawingElementType.text:
+        return text.trim().isNotEmpty;
       case DrawingElementType.line:
       case DrawingElementType.arrow:
       case DrawingElementType.freehand:
@@ -121,6 +128,8 @@ class DrawingElement {
     int? strokeColor,
     double? strokeWidth,
     double? roughness,
+    String? text,
+    double? fontSize,
     Map<String, Object?>? extraData,
   }) {
     return DrawingElement(
@@ -135,6 +144,8 @@ class DrawingElement {
       strokeColor: strokeColor ?? this.strokeColor,
       strokeWidth: strokeWidth ?? this.strokeWidth,
       roughness: roughness ?? this.roughness,
+      text: text ?? this.text,
+      fontSize: fontSize ?? this.fontSize,
       extraData: extraData ?? this.extraData,
     );
   }

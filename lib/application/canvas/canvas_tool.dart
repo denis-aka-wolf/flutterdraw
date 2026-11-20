@@ -7,4 +7,5 @@ enum CanvasTool {
   line,
   arrow,
   freehand,
+  text,
 }
