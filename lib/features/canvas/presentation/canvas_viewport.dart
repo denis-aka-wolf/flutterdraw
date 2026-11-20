@@ -427,7 +427,7 @@ class _CanvasPainter extends CustomPainter {
       final start = element.points[element.points.length - 2];
       final end = element.points.last;
       final angle = math.atan2(end.y - start.y, end.x - start.x);
-      final headLength = math.max(10, element.strokeWidth * 4);
+      final headLength = math.max(10.0, element.strokeWidth * 4).toDouble();
       final wingA = Offset(
         end.x - headLength * math.cos(angle - math.pi / 6),
         end.y - headLength * math.sin(angle - math.pi / 6),
