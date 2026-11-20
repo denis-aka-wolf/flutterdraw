@@ -214,7 +214,13 @@ class _CanvasViewportState extends State<CanvasViewport> {
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
-      child: AnimatedBuilder(
+      onFocusChange: (hasFocus) {
+        if (!hasFocus) {
+          _spacePressed = false;
+          _shiftPressed = false;
+        }
+      },
+      child: AnimatedBuilder,
         animation: widget.controller,
         builder: (context, _) {
           final cursor = _isPanning
