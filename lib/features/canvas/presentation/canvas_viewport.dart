@@ -220,7 +220,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
           _shiftPressed = false;
         }
       },
-      child: AnimatedBuilder,
+      child: AnimatedBuilder(
         animation: widget.controller,
         builder: (context, _) {
           final cursor = _isPanning
