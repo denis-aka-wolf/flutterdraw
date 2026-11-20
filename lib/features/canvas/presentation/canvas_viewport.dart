@@ -80,7 +80,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
 
     final isPrimaryPointer = event.buttons & kPrimaryMouseButton != 0;
     if (isPrimaryPointer &&
-        widget.controller.activeTool == CanvasTool.rectangle) {
+        (widget.controller.activeTool == CanvasTool.rectangle ||
+            widget.controller.activeTool == CanvasTool.select)) {
       _drawingPointer = event.pointer;
       widget.controller.pointerDown(
         _toWorld(event.localPosition),
