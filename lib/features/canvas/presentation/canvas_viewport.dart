@@ -82,7 +82,10 @@ class _CanvasViewportState extends State<CanvasViewport> {
     if (isPrimaryPointer &&
         widget.controller.activeTool == CanvasTool.rectangle) {
       _drawingPointer = event.pointer;
-      widget.controller.pointerDown(_toWorld(event.localPosition));
+      widget.controller.pointerDown(
+        _toWorld(event.localPosition),
+        hitTolerance: 8 / _transform.scale,
+      );
     }
   }
 
@@ -170,6 +173,19 @@ class _CanvasViewportState extends State<CanvasViewport> {
       return KeyEventResult.handled;
     }
 
+    if (event is KeyDownEvent &&
+        (event.logicalKey == LogicalKeyboardKey.delete ||
+            event.logicalKey == LogicalKeyboardKey.backspace)) {
+      widget.controller.deleteSelection();
+      return KeyEventResult.handled;
+    }
+    if (event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      widget.controller.cancelGesture();
+      widget.controller.clearSelection();
+      return KeyEventResult.handled;
+    }
+
     return KeyEventResult.ignored;
   }
 
@@ -219,6 +235,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
                       dotColor: dotColor,
                       rectangles: widget.controller.document.rectangles,
                       preview: widget.controller.rectanglePreview,
+                      selected: widget.controller.selectedRectangle,
                     ),
                   );
                 },
@@ -238,6 +255,7 @@ class _CanvasPainter extends CustomPainter {
     required this.dotColor,
     required this.rectangles,
     required this.preview,
+    required this.selected,
   });
 
   final ViewportTransform transform;
@@ -245,6 +263,7 @@ class _CanvasPainter extends CustomPainter {
   final Color dotColor;
   final List<RectangleElement> rectangles;
   final RectangleElement? preview;
+  final RectangleElement? selected;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -262,6 +281,9 @@ class _CanvasPainter extends CustomPainter {
     }
     if (preview != null) {
       _paintRectangle(canvas, preview!, isPreview: true);
+    }
+    if (selected != null) {
+      _paintSelection(canvas, selected!);
     }
 
     canvas.restore();
@@ -295,6 +317,43 @@ class _CanvasPainter extends CustomPainter {
         final point = transform.worldToScreen(Point2(worldX, worldY));
         canvas.drawCircle(Offset(point.x, point.y), 1.1, paint);
       }
+    }
+  }
+
+  void _paintSelection(Canvas canvas, RectangleElement rectangle) {
+    final rect = Rect.fromLTWH(
+      rectangle.x,
+      rectangle.y,
+      rectangle.width,
+      rectangle.height,
+    );
+    final outline = Paint()
+      ..color = const Color(0xFF4C8DFF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawRect(rect, outline);
+
+    final handlePaint = Paint()
+      ..color = const Color(0xFFFFFFFF)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = const Color(0xFF3578E5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    final points = <Offset>[
+      rect.topLeft,
+      Offset(rect.center.dx, rect.top),
+      rect.topRight,
+      Offset(rect.right, rect.center.dy),
+      rect.bottomRight,
+      Offset(rect.center.dx, rect.bottom),
+      rect.bottomLeft,
+      Offset(rect.left, rect.center.dy),
+    ];
+    for (final point in points) {
+      final handle = Rect.fromCenter(center: point, width: 7, height: 7);
+      canvas.drawRect(handle, handlePaint);
+      canvas.drawRect(handle, borderPaint);
     }
   }
 
@@ -359,6 +418,7 @@ class _CanvasPainter extends CustomPainter {
         oldDelegate.backgroundColor != backgroundColor ||
         oldDelegate.dotColor != dotColor ||
         oldDelegate.rectangles != rectangles ||
-        oldDelegate.preview != preview;
+        oldDelegate.preview != preview ||
+        oldDelegate.selected != selected;
   }
 }
