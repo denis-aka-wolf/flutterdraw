@@ -30,8 +30,7 @@ class ViewportTransform {
   const ViewportTransform({
     this.scale = 1,
     this.translation = const Point2(0, 0),
-  })  : assert(scale > 0),
-        assert(scale.isFinite);
+  }) : assert(scale > 0);
 
   static const double minScale = 0.1;
   static const double maxScale = 8;
