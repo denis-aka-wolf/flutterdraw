@@ -141,11 +141,12 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 
 ### M1: Drawing
 - Rectangle, ellipse, diamond, line, arrow, freehand.
-- Selection, move, resize, delete.
+- Selection, marquee multi-select, move, resize, delete.
+- Copy/paste, duplicate, bring to front and send to back.
 
 ### M2: Editing
-- Text and images, style inspector, multi-select, z-order.
-- Undo/redo, duplicate, copy/paste.
+- Text and images, style inspector, property editing.
+- Undo/redo, grouping and alignment.
 
 ### M3: Documents
 - Native format, open/save, autosave.
