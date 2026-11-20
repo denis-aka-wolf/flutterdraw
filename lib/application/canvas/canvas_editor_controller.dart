@@ -47,6 +47,10 @@ class CanvasEditorController extends ChangeNotifier {
 
   void setActiveTool(CanvasTool tool) {
     if (_activeTool == tool) return;
+    final original = _gestureOriginal;
+    if (original != null && (_isMoving || _activeResizeHandle != null)) {
+      _document = _document.replaceRectangle(original);
+    }
     _activeTool = tool;
     _clearGesture();
     notifyListeners();
