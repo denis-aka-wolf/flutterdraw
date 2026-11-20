@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/geometry/viewport_transform.dart';
 import '../../domain/document/draw_document.dart';
-import '../../domain/elements/rectangle_element.dart';
+import '../../domain/elements/drawing_element.dart';
 import 'canvas_tool.dart';
 
 enum ResizeHandle {
@@ -16,65 +18,119 @@ enum ResizeHandle {
   middleLeft,
 }
 
+class SelectionBounds {
+  const SelectionBounds(this.left, this.top, this.right, this.bottom);
+
+  final double left;
+  final double top;
+  final double right;
+  final double bottom;
+
+  double get width => right - left;
+  double get height => bottom - top;
+}
+
 class CanvasEditorController extends ChangeNotifier {
   DrawDocument _document = DrawDocument();
   CanvasTool _activeTool = CanvasTool.select;
-  RectangleElement? _rectanglePreview;
-  Point2? _rectangleStart;
+  DrawingElement? _drawingPreview;
+  Point2? _drawingStart;
   String? _draftId;
   int _draftSeed = 0;
   int _idCounter = 0;
 
-  String? _selectedElementId;
+  final Set<String> _selectedIds = {};
+  final List<DrawingElement> _clipboard = [];
   Point2? _gestureStart;
-  RectangleElement? _gestureOriginal;
+  Point2? _marqueeEnd;
+  List<DrawingElement> _gestureOriginals = [];
   ResizeHandle? _activeResizeHandle;
   bool _isMoving = false;
 
   DrawDocument get document => _document;
   CanvasTool get activeTool => _activeTool;
-  RectangleElement? get rectanglePreview => _rectanglePreview;
-  String? get selectedElementId => _selectedElementId;
+  DrawingElement? get drawingPreview => _drawingPreview;
+  Set<String> get selectedElementIds => Set.unmodifiable(_selectedIds);
+  bool get isMarqueeSelecting => _gestureStart != null &&
+      _marqueeEnd != null &&
+      !_isMoving &&
+      _activeResizeHandle == null &&
+      _gestureOriginals.isEmpty;
 
-  RectangleElement? get selectedRectangle {
-    final id = _selectedElementId;
-    if (id == null) return null;
-    for (final rectangle in _document.rectangles) {
-      if (rectangle.id == id) return rectangle;
-    }
-    return null;
+  List<DrawingElement> get selectedElements => _document.elements
+      .where((element) => _selectedIds.contains(element.id))
+      .toList(growable: false);
+
+  SelectionBounds? get selectionBounds {
+    final selected = selectedElements;
+    if (selected.isEmpty) return null;
+    return SelectionBounds(
+      selected.map((e) => e.left).reduce(math.min),
+      selected.map((e) => e.top).reduce(math.min),
+      selected.map((e) => e.right).reduce(math.max),
+      selected.map((e) => e.bottom).reduce(math.max),
+    );
+  }
+
+  SelectionBounds? get marqueeBounds {
+    final start = _gestureStart;
+    final end = _marqueeEnd;
+    if (start == null || end == null || !isMarqueeSelecting) return null;
+    return SelectionBounds(
+      math.min(start.x, end.x),
+      math.min(start.y, end.y),
+      math.max(start.x, end.x),
+      math.max(start.y, end.y),
+    );
   }
 
   void setActiveTool(CanvasTool tool) {
     if (_activeTool == tool) return;
-    final original = _gestureOriginal;
-    if (original != null && (_isMoving || _activeResizeHandle != null)) {
-      _document = _document.replaceRectangle(original);
-    }
+    _rollbackSelectionGesture();
     _activeTool = tool;
     _clearGesture();
     notifyListeners();
   }
 
-  void pointerDown(Point2 worldPosition, {double hitTolerance = 8}) {
-    if (_activeTool == CanvasTool.rectangle) {
+  void pointerDown(
+    Point2 worldPosition, {
+    double hitTolerance = 8,
+    bool additiveSelection = false,
+  }) {
+    final drawingType = _drawingTypeForTool(_activeTool);
+    if (drawingType != null) {
       _idCounter++;
-      _draftId = 'rectangle-$_idCounter';
+      _draftId = 'element-$_idCounter';
       _draftSeed = Object.hash(_idCounter, worldPosition.x, worldPosition.y);
-      _rectangleStart = worldPosition;
-      _rectanglePreview = _makeRectangle(worldPosition, worldPosition);
+      _drawingStart = worldPosition;
+      _drawingPreview = DrawingElement(
+        id: _draftId!,
+        type: drawingType,
+        x: worldPosition.x,
+        y: worldPosition.y,
+        width: 0,
+        height: 0,
+        seed: _draftSeed,
+        points: drawingType == DrawingElementType.freehand
+            ? [worldPosition]
+            : const [],
+      );
       notifyListeners();
       return;
     }
 
     if (_activeTool != CanvasTool.select) return;
 
-    final selected = selectedRectangle;
-    if (selected != null) {
-      final handle = _hitResizeHandle(selected, worldPosition, hitTolerance);
-      if (handle != null) {
+    final selectedBounds = selectionBounds;
+    if (_selectedIds.length == 1 && selectedBounds != null) {
+      final selected = selectedElements.single;
+      final handle = _hitResizeHandle(selectedBounds, worldPosition, hitTolerance);
+      if (handle != null &&
+          (selected.type == DrawingElementType.rectangle ||
+              selected.type == DrawingElementType.ellipse ||
+              selected.type == DrawingElementType.diamond)) {
         _gestureStart = worldPosition;
-        _gestureOriginal = selected;
+        _gestureOriginals = [selected];
         _activeResizeHandle = handle;
         _isMoving = false;
         notifyListeners();
@@ -83,149 +139,278 @@ class CanvasEditorController extends ChangeNotifier {
     }
 
     final hit = _hitTest(worldPosition, hitTolerance);
-    _selectedElementId = hit?.id;
-    _gestureStart = hit == null ? null : worldPosition;
-    _gestureOriginal = hit;
-    _activeResizeHandle = null;
-    _isMoving = hit != null;
+    if (hit != null) {
+      if (!additiveSelection && !_selectedIds.contains(hit.id)) {
+        _selectedIds
+          ..clear()
+          ..add(hit.id);
+      } else if (additiveSelection) {
+        if (!_selectedIds.add(hit.id)) _selectedIds.remove(hit.id);
+      }
+      if (_selectedIds.contains(hit.id)) {
+        _gestureStart = worldPosition;
+        _gestureOriginals = selectedElements;
+        _isMoving = true;
+      }
+    } else {
+      if (!additiveSelection) _selectedIds.clear();
+      _gestureStart = worldPosition;
+      _marqueeEnd = worldPosition;
+      _gestureOriginals = [];
+      _isMoving = false;
+    }
     notifyListeners();
   }
 
   void pointerMove(Point2 worldPosition) {
-    if (_activeTool == CanvasTool.rectangle) {
-      final start = _rectangleStart;
-      if (start == null) return;
-      _rectanglePreview = _makeRectangle(start, worldPosition);
+    if (_drawingStart != null) {
+      final preview = _drawingPreview;
+      if (preview == null) return;
+      if (preview.type == DrawingElementType.freehand) {
+        _drawingPreview = preview.appendPoint(worldPosition);
+      } else {
+        _drawingPreview = _makeDraggedElement(
+          preview.type,
+          _drawingStart!,
+          worldPosition,
+        );
+      }
       notifyListeners();
       return;
     }
 
     final start = _gestureStart;
-    final original = _gestureOriginal;
-    if (_activeTool != CanvasTool.select || start == null || original == null) {
+    if (start == null) return;
+
+    if (isMarqueeSelecting) {
+      _marqueeEnd = worldPosition;
+      notifyListeners();
       return;
     }
 
-    final delta = worldPosition - start;
     final handle = _activeResizeHandle;
-    if (handle != null) {
-      _resizeRectangle(original, handle, worldPosition);
-    } else if (_isMoving) {
-      _document = _document.replaceRectangle(
-        original.copyWith(x: original.x + delta.x, y: original.y + delta.y),
-      );
+    if (handle != null && _gestureOriginals.length == 1) {
+      _resizeElement(_gestureOriginals.single, handle, worldPosition);
+      notifyListeners();
+      return;
     }
-    notifyListeners();
+
+    if (_isMoving && _gestureOriginals.isNotEmpty) {
+      final dx = worldPosition.x - start.x;
+      final dy = worldPosition.y - start.y;
+      for (final original in _gestureOriginals) {
+        _document = _document.replaceElement(original.translated(dx, dy));
+      }
+      notifyListeners();
+    }
   }
 
   void pointerUp(Point2 worldPosition) {
-    if (_activeTool == CanvasTool.rectangle) {
-      final start = _rectangleStart;
-      if (start == null) return;
-      final rectangle = _makeRectangle(start, worldPosition);
-      _clearGesture();
-      if (rectangle.isLargeEnough) {
-        _document = _document.addRectangle(rectangle);
-        _selectedElementId = rectangle.id;
+    if (_drawingStart != null) {
+      final preview = _drawingPreview;
+      if (preview == null) return;
+      DrawingElement completed;
+      if (preview.type == DrawingElementType.freehand) {
+        completed = preview.appendPoint(worldPosition);
+      } else {
+        completed = _makeDraggedElement(
+          preview.type,
+          _drawingStart!,
+          worldPosition,
+        );
       }
+      _clearGesture();
+      if (completed.isLargeEnough) {
+        _document = _document.addElement(completed);
+        _selectedIds
+          ..clear()
+          ..add(completed.id);
+      }
+      notifyListeners();
+      return;
+    }
+
+    if (isMarqueeSelecting) {
+      _marqueeEnd = worldPosition;
+      final bounds = marqueeBounds;
+      if (bounds != null) {
+        final matches = _document.elements
+            .where((element) => _intersects(element, bounds))
+            .map((element) => element.id);
+        _selectedIds.addAll(matches);
+      }
+      _clearGesture();
       notifyListeners();
       return;
     }
 
     if (_gestureStart != null) {
-      final original = _gestureOriginal;
       final handle = _activeResizeHandle;
-      if (original != null && _isMoving && handle == null) {
-        final delta = worldPosition - _gestureStart!;
-        _document = _document.replaceRectangle(
-          original.copyWith(x: original.x + delta.x, y: original.y + delta.y),
-        );
-      } else if (original != null && handle != null) {
-        _resizeRectangle(original, handle, worldPosition);
+      if (handle != null && _gestureOriginals.length == 1) {
+        _resizeElement(_gestureOriginals.single, handle, worldPosition);
+      } else if (_isMoving && _gestureOriginals.isNotEmpty) {
+        final dx = worldPosition.x - _gestureStart!.x;
+        final dy = worldPosition.y - _gestureStart!.y;
+        for (final original in _gestureOriginals) {
+          _document = _document.replaceElement(original.translated(dx, dy));
+        }
       }
-      _clearSelectionGesture();
+      _clearGesture();
       notifyListeners();
     }
   }
 
   void deleteSelection() {
-    final id = _selectedElementId;
-    if (id == null) return;
-    _document = _document.removeElement(id);
-    _selectedElementId = null;
-    _clearSelectionGesture();
-    notifyListeners();
-  }
-
-  void clearSelection() {
-    if (_selectedElementId == null) return;
-    _selectedElementId = null;
-    _clearSelectionGesture();
-    notifyListeners();
-  }
-
-  void deleteElement(String id) {
-    final next = _document.removeElement(id);
-    if (next.rectangles.length == _document.rectangles.length) return;
-    _document = next;
-    if (_selectedElementId == id) _selectedElementId = null;
-    notifyListeners();
-  }
-
-  void cancelGesture() {
-    if (_rectangleStart == null &&
-        _rectanglePreview == null &&
-        _gestureStart == null) {
-      return;
-    }
-
-    final original = _gestureOriginal;
-    if (original != null && (_isMoving || _activeResizeHandle != null)) {
-      _document = _document.replaceRectangle(original);
-    }
+    if (_selectedIds.isEmpty) return;
+    _document = _document.removeElements(_selectedIds);
+    _selectedIds.clear();
     _clearGesture();
     notifyListeners();
   }
 
-  RectangleElement? _hitTest(Point2 point, double tolerance) {
-    for (final rectangle in _document.rectangles.reversed) {
-      final left = rectangle.x - tolerance;
-      final top = rectangle.y - tolerance;
-      final right = rectangle.x + rectangle.width + tolerance;
-      final bottom = rectangle.y + rectangle.height + tolerance;
-      if (point.x >= left &&
-          point.x <= right &&
-          point.y >= top &&
-          point.y <= bottom) {
-        return rectangle;
+  void clearSelection() {
+    if (_selectedIds.isEmpty) return;
+    _selectedIds.clear();
+    _clearGesture();
+    notifyListeners();
+  }
+
+  void copySelection() {
+    _clipboard
+      ..clear()
+      ..addAll(selectedElements);
+  }
+
+  void paste() {
+    if (_clipboard.isEmpty) return;
+    final copies = <DrawingElement>[];
+    for (final element in _clipboard) {
+      _idCounter++;
+      copies.add(element.translated(20, 20, newId: 'element-$_idCounter'));
+    }
+    _document = DrawDocument(elements: [..._document.elements, ...copies]);
+    _selectedIds
+      ..clear()
+      ..addAll(copies.map((element) => element.id));
+    notifyListeners();
+  }
+
+  void duplicateSelection() {
+    copySelection();
+    paste();
+  }
+
+  void bringSelectionToFront() {
+    if (_selectedIds.isEmpty) return;
+    _document = _document.reorder(_selectedIds, toFront: true);
+    notifyListeners();
+  }
+
+  void sendSelectionToBack() {
+    if (_selectedIds.isEmpty) return;
+    _document = _document.reorder(_selectedIds, toFront: false);
+    notifyListeners();
+  }
+
+  void cancelGesture() {
+    if (_drawingStart == null && _gestureStart == null) return;
+    _rollbackSelectionGesture();
+    _clearGesture();
+    notifyListeners();
+  }
+
+  DrawingElementType? _drawingTypeForTool(CanvasTool tool) {
+    switch (tool) {
+      case CanvasTool.rectangle:
+        return DrawingElementType.rectangle;
+      case CanvasTool.ellipse:
+        return DrawingElementType.ellipse;
+      case CanvasTool.diamond:
+        return DrawingElementType.diamond;
+      case CanvasTool.line:
+        return DrawingElementType.line;
+      case CanvasTool.arrow:
+        return DrawingElementType.arrow;
+      case CanvasTool.freehand:
+        return DrawingElementType.freehand;
+      case CanvasTool.select:
+      case CanvasTool.hand:
+        return null;
+    }
+  }
+
+  DrawingElement _makeDraggedElement(
+    DrawingElementType type,
+    Point2 start,
+    Point2 end,
+  ) {
+    return DrawingElement.fromDrag(
+      id: _draftId!,
+      type: type,
+      start: start,
+      end: end,
+      seed: _draftSeed,
+    );
+  }
+
+  DrawingElement? _hitTest(Point2 point, double tolerance) {
+    for (final element in _document.elements.reversed) {
+      if (element.type == DrawingElementType.line ||
+          element.type == DrawingElementType.arrow ||
+          element.type == DrawingElementType.freehand) {
+        for (var i = 1; i < element.points.length; i++) {
+          if (_distanceToSegment(point, element.points[i - 1], element.points[i]) <=
+              tolerance + element.strokeWidth) {
+            return element;
+          }
+        }
+      } else if (point.x >= element.left - tolerance &&
+          point.x <= element.right + tolerance &&
+          point.y >= element.top - tolerance &&
+          point.y <= element.bottom + tolerance) {
+        return element;
       }
     }
     return null;
   }
 
+  double _distanceToSegment(Point2 p, Point2 a, Point2 b) {
+    final dx = b.x - a.x;
+    final dy = b.y - a.y;
+    final lengthSquared = dx * dx + dy * dy;
+    if (lengthSquared == 0) {
+      return math.sqrt(math.pow(p.x - a.x, 2) + math.pow(p.y - a.y, 2));
+    }
+    final t = (((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared)
+        .clamp(0.0, 1.0);
+    final x = a.x + t * dx;
+    final y = a.y + t * dy;
+    return math.sqrt(math.pow(p.x - x, 2) + math.pow(p.y - y, 2));
+  }
+
+  bool _intersects(DrawingElement element, SelectionBounds bounds) =>
+      element.right >= bounds.left &&
+      element.left <= bounds.right &&
+      element.bottom >= bounds.top &&
+      element.top <= bounds.bottom;
+
   ResizeHandle? _hitResizeHandle(
-    RectangleElement rectangle,
+    SelectionBounds bounds,
     Point2 point,
     double tolerance,
   ) {
-    final left = rectangle.x;
-    final centerX = rectangle.x + rectangle.width / 2;
-    final right = rectangle.x + rectangle.width;
-    final top = rectangle.y;
-    final centerY = rectangle.y + rectangle.height / 2;
-    final bottom = rectangle.y + rectangle.height;
-
+    final cx = (bounds.left + bounds.right) / 2;
+    final cy = (bounds.top + bounds.bottom) / 2;
     final handles = <ResizeHandle, Point2>{
-      ResizeHandle.topLeft: Point2(left, top),
-      ResizeHandle.topCenter: Point2(centerX, top),
-      ResizeHandle.topRight: Point2(right, top),
-      ResizeHandle.middleRight: Point2(right, centerY),
-      ResizeHandle.bottomRight: Point2(right, bottom),
-      ResizeHandle.bottomCenter: Point2(centerX, bottom),
-      ResizeHandle.bottomLeft: Point2(left, bottom),
-      ResizeHandle.middleLeft: Point2(left, centerY),
+      ResizeHandle.topLeft: Point2(bounds.left, bounds.top),
+      ResizeHandle.topCenter: Point2(cx, bounds.top),
+      ResizeHandle.topRight: Point2(bounds.right, bounds.top),
+      ResizeHandle.middleRight: Point2(bounds.right, cy),
+      ResizeHandle.bottomRight: Point2(bounds.right, bounds.bottom),
+      ResizeHandle.bottomCenter: Point2(cx, bounds.bottom),
+      ResizeHandle.bottomLeft: Point2(bounds.left, bounds.bottom),
+      ResizeHandle.middleLeft: Point2(bounds.left, cy),
     };
-
     for (final entry in handles.entries) {
       final dx = point.x - entry.value.x;
       final dy = point.y - entry.value.y;
@@ -234,16 +419,15 @@ class CanvasEditorController extends ChangeNotifier {
     return null;
   }
 
-  void _resizeRectangle(
-    RectangleElement original,
+  void _resizeElement(
+    DrawingElement original,
     ResizeHandle handle,
     Point2 pointer,
   ) {
-    var left = original.x;
-    var top = original.y;
-    var right = original.x + original.width;
-    var bottom = original.y + original.height;
-
+    var left = original.left;
+    var top = original.top;
+    var right = original.right;
+    var bottom = original.bottom;
     switch (handle) {
       case ResizeHandle.topLeft:
         left = pointer.x;
@@ -274,39 +458,27 @@ class CanvasEditorController extends ChangeNotifier {
         left = pointer.x;
         break;
     }
-
-    final resized = RectangleElement.fromPoints(
-      id: original.id,
-      start: Point2(left, top),
-      end: Point2(right, bottom),
-      seed: original.seed,
-    ).copyWith(
-      strokeColor: original.strokeColor,
-      strokeWidth: original.strokeWidth,
-      roughness: original.roughness,
-    );
-    _document = _document.replaceRectangle(resized);
+    _document = _document.replaceElement(original.copyWith(
+      x: left,
+      y: top,
+      width: right - left,
+      height: bottom - top,
+    ));
   }
 
-  RectangleElement _makeRectangle(Point2 start, Point2 end) {
-    return RectangleElement.fromPoints(
-      id: _draftId!,
-      start: start,
-      end: end,
-      seed: _draftSeed,
-    );
+  void _rollbackSelectionGesture() {
+    for (final original in _gestureOriginals) {
+      _document = _document.replaceElement(original);
+    }
   }
 
   void _clearGesture() {
-    _rectangleStart = null;
-    _rectanglePreview = null;
+    _drawingStart = null;
+    _drawingPreview = null;
     _draftId = null;
-    _clearSelectionGesture();
-  }
-
-  void _clearSelectionGesture() {
     _gestureStart = null;
-    _gestureOriginal = null;
+    _marqueeEnd = null;
+    _gestureOriginals = [];
     _activeResizeHandle = null;
     _isMoving = false;
   }
