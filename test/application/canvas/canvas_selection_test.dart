@@ -54,6 +54,22 @@ void main() {
       controller.dispose();
     });
 
+
+    test('cancelling a move restores the original geometry', () {
+      final controller = makeControllerWithRectangle();
+
+      controller.pointerDown(const Point2(50, 60));
+      controller.pointerMove(const Point2(80, 90));
+      controller.cancelGesture();
+
+      final rectangle = controller.document.rectangles.single;
+      expect(rectangle.x, 10);
+      expect(rectangle.y, 20);
+      expect(rectangle.width, 100);
+      expect(rectangle.height, 100);
+      controller.dispose();
+    });
+
     test('delete removes the selected rectangle', () {
       final controller = makeControllerWithRectangle();
 
