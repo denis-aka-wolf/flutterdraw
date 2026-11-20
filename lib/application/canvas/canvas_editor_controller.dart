@@ -248,23 +248,31 @@ class CanvasEditorController extends ChangeNotifier {
       case ResizeHandle.topLeft:
         left = pointer.x;
         top = pointer.y;
+        break;
       case ResizeHandle.topCenter:
         top = pointer.y;
+        break;
       case ResizeHandle.topRight:
         right = pointer.x;
         top = pointer.y;
+        break;
       case ResizeHandle.middleRight:
         right = pointer.x;
+        break;
       case ResizeHandle.bottomRight:
         right = pointer.x;
         bottom = pointer.y;
+        break;
       case ResizeHandle.bottomCenter:
         bottom = pointer.y;
+        break;
       case ResizeHandle.bottomLeft:
         left = pointer.x;
         bottom = pointer.y;
+        break;
       case ResizeHandle.middleLeft:
         left = pointer.x;
+        break;
     }
 
     final resized = RectangleElement.fromPoints(
