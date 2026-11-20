@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
-import '../../../application/canvas/canvas_tool.dart';\nimport '../../../domain/elements/drawing_element.dart';
+import '../../../application/canvas/canvas_tool.dart';
+import '../../../domain/elements/drawing_element.dart';
 import '../../canvas/presentation/canvas_help_overlay.dart';
 import '../../canvas/presentation/canvas_viewport.dart';
 
