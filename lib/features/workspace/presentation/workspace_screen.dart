@@ -136,7 +136,7 @@ class _ToolRail extends StatelessWidget {
                 tool: CanvasTool.select,
                 icon: Icons.ads_click,
                 tooltip: 'Выбор',
-                enabled: false,
+                enabled: true,
               ),
               _ToolButton(
                 controller: controller,
