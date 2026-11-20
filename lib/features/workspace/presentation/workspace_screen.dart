@@ -32,7 +32,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const _WorkspaceHeader(),
+            _WorkspaceHeader(controller: _controller),
             Expanded(
               child: Row(
                 children: [
@@ -59,7 +59,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 }
 
 class _WorkspaceHeader extends StatelessWidget {
-  const _WorkspaceHeader();
+  const _WorkspaceHeader({required this.controller});
+
+  final CanvasEditorController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +89,27 @@ class _WorkspaceHeader extends StatelessWidget {
           const SizedBox(width: 24),
           const Text('Без названия'),
           const Spacer(),
+          IconButton(
+            tooltip: 'Дублировать (Ctrl+D)',
+            onPressed: controller.selectedElementIds.isEmpty
+                ? null
+                : controller.duplicateSelection,
+            icon: const Icon(Icons.copy_all_outlined),
+          ),
+          IconButton(
+            tooltip: 'На передний план (Ctrl+])',
+            onPressed: controller.selectedElementIds.isEmpty
+                ? null
+                : controller.bringSelectionToFront,
+            icon: const Icon(Icons.flip_to_front),
+          ),
+          IconButton(
+            tooltip: 'На задний план (Ctrl+[)',
+            onPressed: controller.selectedElementIds.isEmpty
+                ? null
+                : controller.sendSelectionToBack,
+            icon: const Icon(Icons.flip_to_back),
+          ),
           IconButton(
             tooltip: 'Отменить',
             onPressed: null,
@@ -150,23 +173,36 @@ class _ToolRail extends StatelessWidget {
                 icon: Icons.rectangle_outlined,
                 tooltip: 'Прямоугольник',
               ),
-              for (final item in const <(IconData, String)>[
-                (Icons.circle_outlined, 'Эллипс'),
-                (Icons.diamond_outlined, 'Ромб'),
-                (Icons.timeline, 'Линия'),
-                (Icons.arrow_right_alt, 'Стрелка'),
-                (Icons.gesture, 'Рисование'),
-                (Icons.title, 'Текст'),
-                (Icons.image_outlined, 'Изображение'),
-              ])
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: IconButton(
-                    tooltip: item.$2,
-                    onPressed: null,
-                    icon: Icon(item.$1),
-                  ),
-                ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.ellipse,
+                icon: Icons.circle_outlined,
+                tooltip: 'Эллипс',
+              ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.diamond,
+                icon: Icons.diamond_outlined,
+                tooltip: 'Ромб',
+              ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.line,
+                icon: Icons.timeline,
+                tooltip: 'Линия',
+              ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.arrow,
+                icon: Icons.arrow_right_alt,
+                tooltip: 'Стрелка',
+              ),
+              _ToolButton(
+                controller: controller,
+                tool: CanvasTool.freehand,
+                icon: Icons.gesture,
+                tooltip: 'Рисование от руки',
+              ),
             ],
           );
         },
@@ -255,10 +291,14 @@ class _StatusBar extends StatelessWidget {
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
-          final count = controller.document.rectangles.length;
+          final count = controller.document.elements.length;
+          final selectedCount = controller.selectedElementIds.length;
           return Row(
             children: [
-              Text('Готово', style: Theme.of(context).textTheme.labelSmall),
+              Text(
+                selectedCount > 0 ? 'Выбрано: $selectedCount' : 'Готово',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
               const Spacer(),
               Text(
                 '$count объектов',
