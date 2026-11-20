@@ -89,7 +89,9 @@ class DrawDocumentCodec {
       ],
       'strokeColor': element.strokeColor,
       'strokeWidth': element.strokeWidth,
-      'roughness': element.roughness,\n      if (element.type == DrawingElementType.text) 'text': element.text,\n      if (element.type == DrawingElementType.text) 'fontSize': element.fontSize,
+      'roughness': element.roughness,
+      if (element.type == DrawingElementType.text) 'text': element.text,
+      if (element.type == DrawingElementType.text) 'fontSize': element.fontSize,
     };
   }
 
@@ -132,6 +134,8 @@ class DrawDocumentCodec {
       'strokeColor',
       'strokeWidth',
       'roughness',
+      'text',
+      'fontSize',
     };
 
     return DrawingElement(
@@ -145,7 +149,9 @@ class DrawDocumentCodec {
       points: points,
       strokeColor: _optionalInt(data, 'strokeColor', 0xFF252525),
       strokeWidth: _optionalDouble(data, 'strokeWidth', 2),
-      roughness: _optionalDouble(data, 'roughness', 1),\n      text: data['text'] is String ? data['text'] as String : '',\n      fontSize: _optionalDouble(data, 'fontSize', 24),
+      roughness: _optionalDouble(data, 'roughness', 1),
+      text: data['text'] is String ? data['text'] as String : '',
+      fontSize: _optionalDouble(data, 'fontSize', 24),
       extraData: {
         for (final entry in data.entries)
           if (!knownKeys.contains(entry.key)) entry.key: entry.value,

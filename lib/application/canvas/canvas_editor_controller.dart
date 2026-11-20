@@ -419,7 +419,10 @@ class CanvasEditorController extends ChangeNotifier {
 
   DrawingElement? _hitTest(Point2 point, double tolerance) {
     for (final element in _document.elements.reversed) {
-      if (element.type == DrawingElementType.text) {\n        if (point.x >= element.left - tolerance && point.x <= element.right + tolerance &&\n            point.y >= element.top - tolerance && point.y <= element.bottom + tolerance) return element;\n      } else if (element.type == DrawingElementType.line ||
+      if (element.type == DrawingElementType.text) {
+        if (point.x >= element.left - tolerance && point.x <= element.right + tolerance &&
+            point.y >= element.top - tolerance && point.y <= element.bottom + tolerance) return element;
+      } else if (element.type == DrawingElementType.line ||
           element.type == DrawingElementType.arrow ||
           element.type == DrawingElementType.freehand) {
         for (var i = 1; i < element.points.length; i++) {
