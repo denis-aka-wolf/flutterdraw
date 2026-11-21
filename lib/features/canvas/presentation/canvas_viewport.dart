@@ -62,6 +62,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
       );
 
   void _handlePointerDown(PointerDownEvent event) {
+    if (_editingTextId != null) return;
     _focusNode.requestFocus();
     final isMouse = event.kind == PointerDeviceKind.mouse;
     final isMiddleMouse = isMouse && event.buttons & kMiddleMouseButton != 0;
