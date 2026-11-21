@@ -122,11 +122,7 @@ class CanvasEditorController extends ChangeNotifier {
     final selected = selectedElements;
     if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
     final original = selected.single;
-    final content = value.trim();
-    if (content.isEmpty) {
-      deleteSelection();
-      return;
-    }
+    final content = value;
     final height = math.max(original.fontSize * 1.5,
         content.split('\n').length * original.fontSize * 1.45);
     _document = _document.replaceElement(original.copyWith(

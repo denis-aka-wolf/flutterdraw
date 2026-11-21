@@ -462,7 +462,10 @@ class _CanvasPainter extends CustomPainter {
         textDirection: TextDirection.ltr,
         textAlign: _textAlignFor(element.textAlign),
       )..layout(maxWidth: math.max(40.0, element.width));
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(element.x, element.y, element.width, element.height));
       painter.paint(canvas, Offset(element.x, element.y));
+      canvas.restore();
       return;
     }
     if (element.type == DrawingElementType.line ||

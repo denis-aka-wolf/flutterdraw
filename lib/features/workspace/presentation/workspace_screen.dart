@@ -306,7 +306,7 @@ class _InspectorPanel extends StatelessWidget {
               children: [
                 Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 14),
-                _section(context, 'Обводка'),
+                _section(context, element.type == DrawingElementType.text ? 'Цвет текста' : 'Цвет обводки'),
                 _colorChoices(
                   selectedColor: element.strokeColor,
                   onSelected: (color) => controller.updateSelectedProperties(strokeColor: color),
@@ -451,13 +451,13 @@ class _InspectorPanel extends StatelessWidget {
 
   Widget _dimensionField(BuildContext context, String label, double value,
       ValueChanged<double> onSubmitted) {
-    final textController = TextEditingController(text: value.round().toString());
     return Row(
       children: [
         SizedBox(width: 58, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
         Expanded(
-          child: TextField(
-            controller: textController,
+          child: TextFormField(
+            key: ValueKey('$label-${value.round()}'),
+            initialValue: value.round().toString(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
               suffixText: 'px', isDense: true, border: OutlineInputBorder(),
