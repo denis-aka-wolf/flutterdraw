@@ -52,6 +52,7 @@ Text, images, document persistence, undo/redo and Excalidraw import/export remai
 ## Documentation
 
 - [Project Wiki](https://github.com/denis-aka-wolf/flutterdraw/wiki) - guides, project pages and development documentation.
+- [Local release build guide](docs/BUILDING_RELEASES.md) - build Windows, Android and Web packages without GitHub Actions.
 
 ## Architecture
 
@@ -67,6 +68,14 @@ Install Flutter, then run:
     flutter run -d windows
 
 Use macos, linux, chrome, android or an available iOS simulator/device for other targets.
+
+## Building release packages on Windows
+
+GitHub Actions is not required. With Flutter, Visual Studio C++ build tools and Android SDK installed, run:
+
+    .\scripts\build_release.ps1
+
+The script runs analysis and tests, then creates Windows, Android APK and Web packages in dist/vX.Y.Z. See [the release build guide](docs/BUILDING_RELEASES.md) for requirements and manual GitHub Releases publishing.
 
 ## Excalidraw compatibility
 
