@@ -321,13 +321,15 @@ class _InspectorPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                 ],
-                _section(context, 'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
-                Slider(
-                  min: 0.5, max: 12, divisions: 23,
-                  value: element.strokeWidth.clamp(0.5, 12).toDouble(),
-                  onChanged: (value) => controller.updateSelectedProperties(strokeWidth: value),
-                ),
-                const SizedBox(height: 8),
+                if (element.type != DrawingElementType.text) ...[
+                  _section(context, 'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
+                  Slider(
+                    min: 0.5, max: 12, divisions: 23,
+                    value: element.strokeWidth.clamp(0.5, 12).toDouble(),
+                    onChanged: (value) => controller.updateSelectedProperties(strokeWidth: value),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 _section(context, 'Непрозрачность: ${(element.opacity * 100).round()}%'),
                 Slider(
                   min: 0.05, max: 1, divisions: 19,
