@@ -49,6 +49,30 @@ void main() {
       ]);
     });
 
+    test('round-trips fill, opacity and text typography properties', () {
+      final document = DrawDocument(elements: [
+        DrawingElement(
+          id: 'text-style',
+          type: DrawingElementType.text,
+          x: 4, y: 8, width: 240, height: 80, seed: 11,
+          text: 'Styled text',
+          fontSize: 32,
+          fontFamily: 'Georgia',
+          textAlign: 'center',
+          strokeColor: 0xFF2563EB,
+          fillColor: 0xFF16A34A,
+          opacity: 0.4,
+        ),
+      ]);
+
+      final restored = codec.decode(codec.encode(document)).elements.single;
+      expect(restored.fontFamily, 'Georgia');
+      expect(restored.textAlign, 'center');
+      expect(restored.fontSize, 32);
+      expect(restored.fillColor, 0xFF16A34A);
+      expect(restored.opacity, 0.4);
+    });
+
     test('preserves unknown document and element fields', () {
       const source = '''
       {

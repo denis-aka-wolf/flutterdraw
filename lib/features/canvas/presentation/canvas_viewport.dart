@@ -162,6 +162,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
       child: Material(color: Colors.transparent, child: TextField(
         controller: _inlineTextController, focusNode: _inlineTextFocus,
         maxLines: null, expands: true,
+        textInputAction: TextInputAction.done,
+        onTapOutside: (_) => _finishInlineTextEdit(),
         textAlign: _textAlignFor(element.textAlign),
         style: TextStyle(fontFamily: element.fontFamily,
           fontSize: element.fontSize * _transform.scale,
@@ -685,6 +687,7 @@ class _CanvasPainter extends CustomPainter {
   bool shouldRepaint(covariant _CanvasPainter oldDelegate) =>
       oldDelegate.transform.scale != transform.scale ||
       oldDelegate.transform.translation != transform.translation ||
+      oldDelegate.editingTextId != editingTextId ||
       oldDelegate.backgroundColor != backgroundColor ||
       oldDelegate.dotColor != dotColor ||
       oldDelegate.elements != elements ||
