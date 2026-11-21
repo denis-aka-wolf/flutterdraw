@@ -28,6 +28,20 @@ void main() {
       controller.dispose();
     });
 
+    test('pasting a group creates a separate group identity', () {
+      final controller = CanvasEditorController()..loadDocument(DrawDocument(elements: [
+        rect('a', 0, 0, 20, 20), rect('b', 40, 40, 20, 20),
+      ]));
+      controller.selectElementById('a');
+      controller.selectElementById('b', additive: true);
+      controller.groupSelection();
+      controller.copySelection();
+      controller.paste();
+      final groups = controller.document.elements.map((e) => e.extraData['flutterdrawGroupId']).toSet();
+      expect(groups.length, 2);
+      controller.dispose();
+    });
+
     test('aligns selected elements to their shared left edge', () {
       final controller = CanvasEditorController()..loadDocument(DrawDocument(elements: [
         rect('a', 10, 10, 20, 20), rect('b', 60, 50, 30, 20),
