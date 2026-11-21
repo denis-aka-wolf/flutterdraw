@@ -237,7 +237,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
       );
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) setState(() {
+        _isSaving = false;
+        _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено';
+      });
     }
   }
 
