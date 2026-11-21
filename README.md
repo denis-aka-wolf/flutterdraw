@@ -2,6 +2,10 @@
 
 FlutterDraw is a cross-platform hand-drawn whiteboard built with Flutter.
 
+## Screenshots
+
+![FlutterDraw application screenshot](docs/img/FlutterDraw.PNG)
+
 ## Goals
 
 - Infinite canvas with a sketch-like visual style.
