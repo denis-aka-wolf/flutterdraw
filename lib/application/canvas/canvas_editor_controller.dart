@@ -65,9 +65,9 @@ class CanvasEditorController extends ChangeNotifier {
     final selected = selectedElements;
     if (selected.length != 1) return false;
     final type = selected.single.type;
-    return type == DrawingElementType.rectangle ||
-        type == DrawingElementType.ellipse ||
-        type == DrawingElementType.diamond;
+    return type != DrawingElementType.line &&
+        type != DrawingElementType.arrow &&
+        type != DrawingElementType.freehand;
   }
 
   SelectionBounds? get selectionBounds {
@@ -134,6 +134,37 @@ class CanvasEditorController extends ChangeNotifier {
       height: height,
     ));
     notifyListeners();
+  }
+
+  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, double? opacity, String? fontFamily, String? textAlign}) {
+    final selected = selectedElements;
+    if (selected.isEmpty) return;
+    for (final element in selected) {
+      _document = _document.replaceElement(element.copyWith(
+        strokeColor: strokeColor, fillColor: fillColor, strokeWidth: strokeWidth,
+        opacity: opacity, fontFamily: fontFamily, textAlign: textAlign,
+      ));
+    }
+    notifyListeners();
+  }
+
+  void setSelectedTextBlockSize({double? width, double? height}) {
+    final selected = selectedElements;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final element = selected.single;
+    _document = _document.replaceElement(element.copyWith(
+      width: width == null ? element.width : width.clamp(40.0, 2000.0).toDouble(),
+      height: height == null ? element.height : height.clamp(24.0, 2000.0).toDouble(),
+    ));
+    notifyListeners();
+  }
+
+  DrawingElement? selectElementAt(Point2 point, {double tolerance = 8}) {
+    final hit = _hitTest(point, tolerance);
+    if (hit == null) return null;
+    _selectedIds..clear()..add(hit.id);
+    notifyListeners();
+    return hit;
   }
 
   void setSelectedTextFontSize(double value) {

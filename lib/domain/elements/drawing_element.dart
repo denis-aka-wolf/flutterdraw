@@ -25,6 +25,10 @@ class DrawingElement {
     this.roughness = 1,
     this.text = '',
     this.fontSize = 24,
+    this.fontFamily = 'Roboto',
+    this.textAlign = 'left',
+    this.fillColor = 0x00000000,
+    this.opacity = 1,
     Map<String, Object?> extraData = const {},
   })  : points = List.unmodifiable(points),
         extraData = Map.unmodifiable(extraData);
@@ -42,6 +46,10 @@ class DrawingElement {
   final double roughness;
   final String text;
   final double fontSize;
+  final String fontFamily;
+  final String textAlign;
+  final int fillColor;
+  final double opacity;
 
   /// Fields unknown to this version of FlutterDraw, retained for round trips.
   final Map<String, Object?> extraData;
@@ -130,6 +138,10 @@ class DrawingElement {
     double? roughness,
     String? text,
     double? fontSize,
+    String? fontFamily,
+    String? textAlign,
+    int? fillColor,
+    double? opacity,
     Map<String, Object?>? extraData,
   }) {
     return DrawingElement(
@@ -146,6 +158,10 @@ class DrawingElement {
       roughness: roughness ?? this.roughness,
       text: text ?? this.text,
       fontSize: fontSize ?? this.fontSize,
+      fontFamily: fontFamily ?? this.fontFamily,
+      textAlign: textAlign ?? this.textAlign,
+      fillColor: fillColor ?? this.fillColor,
+      opacity: opacity ?? this.opacity,
       extraData: extraData ?? this.extraData,
     );
   }

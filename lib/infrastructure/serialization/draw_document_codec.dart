@@ -90,6 +90,10 @@ class DrawDocumentCodec {
       'strokeColor': element.strokeColor,
       'strokeWidth': element.strokeWidth,
       'roughness': element.roughness,
+      'opacity': element.opacity,
+      'fillColor': element.fillColor,
+      if (element.type == DrawingElementType.text) 'fontFamily': element.fontFamily,
+      if (element.type == DrawingElementType.text) 'textAlign': element.textAlign,
       if (element.type == DrawingElementType.text) 'text': element.text,
       if (element.type == DrawingElementType.text) 'fontSize': element.fontSize,
     };
@@ -134,6 +138,10 @@ class DrawDocumentCodec {
       'strokeColor',
       'strokeWidth',
       'roughness',
+      'opacity',
+      'fillColor',
+      'fontFamily',
+      'textAlign',
       'text',
       'fontSize',
     };
@@ -150,6 +158,10 @@ class DrawDocumentCodec {
       strokeColor: _optionalInt(data, 'strokeColor', 0xFF252525),
       strokeWidth: _optionalDouble(data, 'strokeWidth', 2),
       roughness: _optionalDouble(data, 'roughness', 1),
+      opacity: _optionalDouble(data, 'opacity', 1).clamp(0.0, 1.0).toDouble(),
+      fillColor: _optionalInt(data, 'fillColor', 0x00000000),
+      fontFamily: data['fontFamily'] is String ? data['fontFamily'] as String : 'Roboto',
+      textAlign: data['textAlign'] is String ? data['textAlign'] as String : 'left',
       text: data['text'] is String ? data['text'] as String : '',
       fontSize: _optionalDouble(data, 'fontSize', 24),
       extraData: {
