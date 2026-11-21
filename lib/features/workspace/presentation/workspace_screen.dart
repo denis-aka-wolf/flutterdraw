@@ -261,15 +261,20 @@ class _ToolButton extends StatelessWidget {
 
 class _InspectorPanel extends StatelessWidget {
   const _InspectorPanel({required this.controller});
-
   final CanvasEditorController controller;
+
+  static const _palette = <int>[
+    0xFF252525, 0xFF6B7280, 0xFFDC2626, 0xFFEA580C,
+    0xFFD97706, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB,
+    0xFF7C3AED, 0xFFDB2777, 0xFFFFFFFF,
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 240,
+      width: 272,
       margin: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
@@ -278,51 +283,192 @@ class _InspectorPanel extends StatelessWidget {
         animation: controller,
         builder: (context, _) {
           final selected = controller.selectedElements;
-          final textElement = selected.length == 1 &&
-                  selected.single.type == DrawingElementType.text
-              ? selected.single
-              : null;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              if (textElement == null)
-                Text(
-                  'Выберите текстовый объект, чтобы изменить его содержимое и размер.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                )
-              else ...[
-                Text('Текст', style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(height: 8),
-                TextFormField(
-                  key: ValueKey(textElement.id),
-                  initialValue: textElement.text,
-                  minLines: 3,
-                  maxLines: 7,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                  ),
-                  onChanged: controller.updateSelectedText,
-                ),
-                const SizedBox(height: 18),
-                Text('Размер шрифта: ${textElement.fontSize.round()}',
-                    style: Theme.of(context).textTheme.labelMedium),
-                Slider(
-                  min: 10,
-                  max: 72,
-                  divisions: 31,
-                  value: textElement.fontSize.clamp(10.0, 72.0).toDouble(),
-                  onChanged: controller.setSelectedTextFontSize,
-                ),
+          if (selected.isEmpty) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                Text('Выберите один или несколько объектов на холсте.',
+                  style: Theme.of(context).textTheme.bodySmall),
               ],
-            ],
+            );
+          }
+          final element = selected.first;
+          final isText = selected.length == 1 && element.type == DrawingElementType.text;
+          final hasFill = selected.any((e) =>
+              e.type == DrawingElementType.rectangle ||
+              e.type == DrawingElementType.ellipse ||
+              e.type == DrawingElementType.diamond);
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 14),
+                _section(context, 'Обводка'),
+                _colorChoices(
+                  selectedColor: element.strokeColor,
+                  onSelected: (color) => controller.updateSelectedProperties(strokeColor: color),
+                ),
+                const SizedBox(height: 14),
+                if (hasFill) ...[
+                  _section(context, 'Заливка'),
+                  _colorChoices(
+                    selectedColor: element.fillColor,
+                    allowNone: true,
+                    onSelected: (color) => controller.updateSelectedProperties(fillColor: color),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                _section(context, 'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
+                Slider(
+                  min: 0.5, max: 12, divisions: 23,
+                  value: element.strokeWidth.clamp(0.5, 12).toDouble(),
+                  onChanged: (value) => controller.updateSelectedProperties(strokeWidth: value),
+                ),
+                const SizedBox(height: 8),
+                _section(context, 'Непрозрачность: ${(element.opacity * 100).round()}%'),
+                Slider(
+                  min: 0.05, max: 1, divisions: 19,
+                  value: element.opacity.clamp(0.05, 1).toDouble(),
+                  onChanged: (value) => controller.updateSelectedProperties(opacity: value),
+                ),
+                if (isText) ...[
+                  const Divider(height: 26),
+                  _section(context, 'Содержимое'),
+                  TextFormField(
+                    key: ValueKey('text-${element.id}'),
+                    initialValue: element.text,
+                    minLines: 2,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(), isDense: true,
+                    ),
+                    onChanged: controller.updateSelectedText,
+                  ),
+                  const SizedBox(height: 14),
+                  _section(context, 'Шрифт'),
+                  DropdownButtonFormField<String>(
+                    value: element.fontFamily,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(), isDense: true,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
+                      DropdownMenuItem(value: 'Arial', child: Text('Arial')),
+                      DropdownMenuItem(value: 'Georgia', child: Text('Georgia')),
+                      DropdownMenuItem(value: 'Courier New', child: Text('Courier New')),
+                      DropdownMenuItem(value: 'Times New Roman', child: Text('Times New Roman')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) controller.updateSelectedProperties(fontFamily: value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _section(context, 'Размер шрифта: ${element.fontSize.round()}'),
+                  Slider(
+                    min: 10, max: 96, divisions: 43,
+                    value: element.fontSize.clamp(10, 96).toDouble(),
+                    onChanged: controller.setSelectedTextFontSize,
+                  ),
+                  _section(context, 'Выравнивание'),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'left', icon: Icon(Icons.format_align_left)),
+                      ButtonSegment(value: 'center', icon: Icon(Icons.format_align_center)),
+                      ButtonSegment(value: 'right', icon: Icon(Icons.format_align_right)),
+                    ],
+                    selected: {element.textAlign},
+                    onSelectionChanged: (values) =>
+                      controller.updateSelectedProperties(textAlign: values.first),
+                  ),
+                  const SizedBox(height: 12),
+                  _section(context, 'Размер текстового блока'),
+                  _dimensionField(context, 'Ширина', element.width,
+                    (value) => controller.setSelectedTextBlockSize(width: value)),
+                  const SizedBox(height: 8),
+                  _dimensionField(context, 'Высота', element.height,
+                    (value) => controller.setSelectedTextBlockSize(height: value)),
+                ],
+              ],
+            ),
           );
         },
       ),
+    );
+  }
+
+  Widget _section(BuildContext context, String label) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+  );
+
+  Widget _colorChoices({
+    required int selectedColor,
+    required ValueChanged<int> onSelected,
+    bool allowNone = false,
+  }) {
+    return Wrap(
+      spacing: 7, runSpacing: 7,
+      children: [
+        if (allowNone)
+          InkWell(
+            onTap: () => onSelected(0x00000000),
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              width: 26, height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selectedColor == 0 ? Colors.blue : Colors.grey,
+                  width: selectedColor == 0 ? 2.5 : 1,
+                ),
+              ),
+              child: const Icon(Icons.block, size: 15),
+            ),
+          ),
+        for (final color in _palette)
+          InkWell(
+            onTap: () => onSelected(color),
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              width: 26, height: 26,
+              decoration: BoxDecoration(
+                color: Color(color),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selectedColor == color ? Colors.blue : Colors.black26,
+                  width: selectedColor == color ? 2.5 : 1,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _dimensionField(BuildContext context, String label, double value,
+      ValueChanged<double> onSubmitted) {
+    final textController = TextEditingController(text: value.round().toString());
+    return Row(
+      children: [
+        SizedBox(width: 58, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
+        Expanded(
+          child: TextField(
+            controller: textController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              suffixText: 'px', isDense: true, border: OutlineInputBorder(),
+            ),
+            onSubmitted: (raw) {
+              final parsed = double.tryParse(raw);
+              if (parsed != null && parsed.isFinite) onSubmitted(parsed);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
