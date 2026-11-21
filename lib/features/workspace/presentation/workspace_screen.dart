@@ -1,4 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../infrastructure/serialization/draw_document_codec.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
@@ -15,17 +23,133 @@ class WorkspaceScreen extends StatefulWidget {
 
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
   late final CanvasEditorController _controller;
+  static const _autosaveKey = 'flutterdraw_autosave_v1';
+  final _codec = const DrawDocumentCodec();
+  Timer? _autosaveTimer;
+  String _documentTitle = 'Без названия';
+  bool _restoringSession = false;
+  String? _lastAutosavedContent;
 
   @override
   void initState() {
     super.initState();
     _controller = CanvasEditorController();
+    _controller.addListener(_onDocumentChanged);
+    _restoreSession();
   }
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
+    _controller.removeListener(_onDocumentChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onDocumentChanged() {
+    if (_restoringSession) return;
+    _autosaveTimer?.cancel();
+    _autosaveTimer = Timer(const Duration(milliseconds: 700), _writeAutosave);
+  }
+
+  Future<void> _writeAutosave() async {
+    final content = _codec.encode(_controller.document, pretty: false);
+    if (content == _lastAutosavedContent) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_autosaveKey, jsonEncode({
+      'title': _documentTitle,
+      'document': jsonDecode(content),
+    }));
+    _lastAutosavedContent = content;
+  }
+
+  Future<void> _restoreSession() async {
+    _restoringSession = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_autosaveKey);
+      if (raw == null) return;
+      final session = jsonDecode(raw);
+      if (session is! Map<String, dynamic> ||
+          session['document'] is! Map<String, dynamic>) return;
+      final document = _codec.decode(jsonEncode(session['document']));
+      if (!mounted) return;
+      setState(() {
+        _documentTitle = session['title'] is String
+            ? session['title'] as String
+            : 'Без названия';
+      });
+      _controller.loadDocument(document);
+      _lastAutosavedContent = _codec.encode(document, pretty: false);
+    } on Object {
+      // A damaged recovery snapshot must not prevent the editor from opening.
+    } finally {
+      _restoringSession = false;
+    }
+  }
+
+  void _newDocument() {
+    _controller.newDocument();
+    setState(() => _documentTitle = 'Без названия');
+  }
+
+  Future<void> _openDocument() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['flutterdraw'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null) {
+        throw const FormatException('Не удалось прочитать содержимое файла.');
+      }
+      final document = _codec.decode(utf8.decode(bytes));
+      _controller.loadDocument(document);
+      setState(() => _documentTitle = file.name);
+      _lastAutosavedContent = null;
+      _onDocumentChanged();
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось открыть документ: $error')),
+      );
+    }
+  }
+
+  Future<void> _saveDocument() async {
+    try {
+      final content = _codec.encode(_controller.document);
+      final bytes = Uint8List.fromList(utf8.encode(content));
+      final suggestedName = _documentTitle == 'Без названия'
+          ? 'Без названия.flutterdraw'
+          : (_documentTitle.endsWith('.flutterdraw')
+              ? _documentTitle
+              : '$ _documentTitle.flutterdraw').replaceFirst(r'$ ', '');
+      final savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: 'Сохранить документ FlutterDraw',
+        fileName: suggestedName,
+        type: FileType.custom,
+        allowedExtensions: ['flutterdraw'],
+        bytes: bytes,
+      );
+      if (savedPath == null) return;
+      final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
+      if (mounted) setState(() => _documentTitle = fileName);
+      _lastAutosavedContent = _codec.encode(_controller.document, pretty: false);
+      await _writeAutosave();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Документ сохранён: $fileName')),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось сохранить документ: $error')),
+      );
+    }
   }
 
   @override
@@ -34,7 +158,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _WorkspaceHeader(controller: _controller),
+            _WorkspaceHeader(
+              controller: _controller,
+              title: _documentTitle,
+              onNew: _newDocument,
+              onOpen: _openDocument,
+              onSave: _saveDocument,
+            ),
             Expanded(
               child: Row(
                 children: [
@@ -71,9 +201,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 }
 
 class _WorkspaceHeader extends StatelessWidget {
-  const _WorkspaceHeader({required this.controller});
+  const _WorkspaceHeader({
+    required this.controller,
+    required this.title,
+    required this.onNew,
+    required this.onOpen,
+    required this.onSave,
+  });
 
   final CanvasEditorController controller;
+  final String title;
+  final VoidCallback onNew;
+  final VoidCallback onOpen;
+  final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +239,7 @@ class _WorkspaceHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(width: 24),
-          const Text('Без названия'),
+          Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
           const Spacer(),
           IconButton(
             tooltip: 'Дублировать (Ctrl+D)',
@@ -133,10 +273,14 @@ class _WorkspaceHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
+          IconButton(tooltip: 'Новый документ', onPressed: onNew,
+            icon: const Icon(Icons.note_add_outlined)),
+          IconButton(tooltip: 'Открыть документ', onPressed: onOpen,
+            icon: const Icon(Icons.folder_open_outlined)),
           FilledButton.tonalIcon(
-            onPressed: null,
-            icon: const Icon(Icons.file_download_outlined, size: 18),
-            label: const Text('Экспорт'),
+            onPressed: onSave,
+            icon: const Icon(Icons.save_outlined, size: 18),
+            label: const Text('Сохранить'),
           ),
         ],
       ),

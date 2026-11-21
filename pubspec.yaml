@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.5.3
+  file_picker: ^10.3.7
   material_ui: ^1.11.1
 
 dev_dependencies:
