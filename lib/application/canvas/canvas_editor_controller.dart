@@ -152,7 +152,16 @@ class CanvasEditorController extends ChangeNotifier {
         opacity: opacity, fontFamily: fontFamily, textAlign: textAlign,
       ));
     }
-    _recordHistory(before, mergeKey: 'element-properties');
+    final propertyKey = [
+      if (strokeColor != null) 'strokeColor',
+      if (fillColor != null) 'fillColor',
+      if (strokeWidth != null) 'strokeWidth',
+      if (opacity != null) 'opacity',
+      if (fontFamily != null) 'fontFamily',
+      if (textAlign != null) 'textAlign',
+    ].join(',');
+    final selectedKey = _selectedIds.toList()..sort();
+    _recordHistory(before, mergeKey: 'element-properties:$propertyKey:$selectedKey');
     notifyListeners();
   }
 
@@ -357,12 +366,19 @@ class CanvasEditorController extends ChangeNotifier {
       final before = _gestureDocumentBefore;
       final handle = _activeResizeHandle;
       if (handle != null && _gestureOriginals.length == 1) {
-        _resizeElement(_gestureOriginals.single, handle, worldPosition);
+        if (worldPosition.x == _gestureStart!.x &&
+            worldPosition.y == _gestureStart!.y) {
+          _document = _document.replaceElement(_gestureOriginals.single);
+        } else {
+          _resizeElement(_gestureOriginals.single, handle, worldPosition);
+        }
       } else if (_isMoving && _gestureOriginals.isNotEmpty) {
         final dx = worldPosition.x - _gestureStart!.x;
         final dy = worldPosition.y - _gestureStart!.y;
         for (final original in _gestureOriginals) {
-          _document = _document.replaceElement(original.translated(dx, dy));
+          _document = _document.replaceElement(
+            dx == 0 && dy == 0 ? original : original.translated(dx, dy),
+          );
         }
       }
       _clearGesture();
@@ -469,6 +485,10 @@ class CanvasEditorController extends ChangeNotifier {
     } else {
       _history.add(_document);
       _historyIndex = _history.length - 1;
+      if (_history.length > 100) {
+        _history.removeAt(0);
+        _historyIndex--;
+      }
     }
     _lastHistoryMergeKey = mergeKey;
   }
