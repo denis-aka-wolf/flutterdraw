@@ -63,6 +63,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
 
   void _handlePointerDown(PointerDownEvent event) {
     if (_editingTextId != null) return;
+    if (event.kind == PointerDeviceKind.mouse && event.buttons & kSecondaryMouseButton != 0) { _showContextMenu(event); return; }
     _focusNode.requestFocus();
     final isMouse = event.kind == PointerDeviceKind.mouse;
     final isMiddleMouse = isMouse && event.buttons & kMiddleMouseButton != 0;
@@ -96,6 +97,54 @@ class _CanvasViewportState extends State<CanvasViewport> {
         hitTolerance: 8 / _transform.scale,
         additiveSelection: _shiftPressed,
       );
+    }
+  }
+
+  Future<void> _showContextMenu(PointerDownEvent event) async {
+    final hit = widget.controller.selectElementAt(_toWorld(event.localPosition), tolerance: 8 / _transform.scale, preserveSelection: true);
+    if (hit == null) widget.controller.clearSelection();
+    final hasSelection = widget.controller.selectedElementIds.isNotEmpty;
+    final multi = widget.controller.selectedElementIds.length > 1;
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(event.position.dx, event.position.dy,
+        MediaQuery.of(context).size.width - event.position.dx,
+        MediaQuery.of(context).size.height - event.position.dy),
+      items: [
+        PopupMenuItem(value: 'copy', enabled: hasSelection, child: const Text('Копировать')),
+        const PopupMenuItem(value: 'paste', child: Text('Вставить')),
+        PopupMenuItem(value: 'duplicate', enabled: hasSelection, child: const Text('Дублировать')),
+        const PopupMenuDivider(),
+        PopupMenuItem(value: 'group', enabled: multi, child: const Text('Сгруппировать')),
+        PopupMenuItem(value: 'ungroup', enabled: widget.controller.canUngroupSelection, child: const Text('Разгруппировать')),
+        const PopupMenuDivider(),
+        PopupMenuItem(value: 'align-left', enabled: multi, child: const Text('По левому краю')),
+        PopupMenuItem(value: 'align-center-x', enabled: multi, child: const Text('По центру по горизонтали')),
+        PopupMenuItem(value: 'align-right', enabled: multi, child: const Text('По правому краю')),
+        PopupMenuItem(value: 'align-top', enabled: multi, child: const Text('По верхнему краю')),
+        PopupMenuItem(value: 'align-center-y', enabled: multi, child: const Text('По центру по вертикали')),
+        PopupMenuItem(value: 'align-bottom', enabled: multi, child: const Text('По нижнему краю')),
+        const PopupMenuDivider(),
+        PopupMenuItem(value: 'front', enabled: hasSelection, child: const Text('На передний план')),
+        PopupMenuItem(value: 'back', enabled: hasSelection, child: const Text('На задний план')),
+        PopupMenuItem(value: 'delete', enabled: hasSelection, child: const Text('Удалить')),
+      ],
+    );
+    switch (action) {
+      case 'copy': widget.controller.copySelection(); break;
+      case 'paste': widget.controller.paste(); break;
+      case 'duplicate': widget.controller.duplicateSelection(); break;
+      case 'group': widget.controller.groupSelection(); break;
+      case 'ungroup': widget.controller.ungroupSelection(); break;
+      case 'align-left': widget.controller.alignSelection(ElementAlignment.left); break;
+      case 'align-center-x': widget.controller.alignSelection(ElementAlignment.centerHorizontal); break;
+      case 'align-right': widget.controller.alignSelection(ElementAlignment.right); break;
+      case 'align-top': widget.controller.alignSelection(ElementAlignment.top); break;
+      case 'align-center-y': widget.controller.alignSelection(ElementAlignment.centerVertical); break;
+      case 'align-bottom': widget.controller.alignSelection(ElementAlignment.bottom); break;
+      case 'front': widget.controller.bringSelectionToFront(); break;
+      case 'back': widget.controller.sendSelectionToBack(); break;
+      case 'delete': widget.controller.deleteSelection(); break;
     }
   }
 
@@ -287,6 +336,10 @@ class _CanvasViewportState extends State<CanvasViewport> {
       return KeyEventResult.handled;
     }
 
+    if (isCommand && event.logicalKey == LogicalKeyboardKey.keyG) {
+      if (HardwareKeyboard.instance.isShiftPressed) { widget.controller.ungroupSelection(); } else { widget.controller.groupSelection(); }
+      return KeyEventResult.handled;
+    }
     if (isCommand) {
       switch (event.logicalKey) {
         case LogicalKeyboardKey.keyC:
@@ -377,6 +430,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
                           showResizeHandles: widget.controller.canResizeSelection,
                           marquee: widget.controller.marqueeBounds,
                           editingTextId: _editingTextId,
+                          alignmentGuidesX: widget.controller.alignmentGuidesX,
+                          alignmentGuidesY: widget.controller.alignmentGuidesY,
                         ),
                       )),
                       if (_editingTextId != null) _buildInlineTextEditor(),
@@ -410,6 +465,8 @@ class _CanvasPainter extends CustomPainter {
     required this.showResizeHandles,
     required this.marquee,
     required this.editingTextId,
+    required this.alignmentGuidesX,
+    required this.alignmentGuidesY,
   });
 
   final ViewportTransform transform;
@@ -421,6 +478,8 @@ class _CanvasPainter extends CustomPainter {
   final bool showResizeHandles;
   final SelectionBounds? marquee;
   final String? editingTextId;
+  final List<double> alignmentGuidesX;
+  final List<double> alignmentGuidesY;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -438,6 +497,15 @@ class _CanvasPainter extends CustomPainter {
     if (selection != null) _paintSelection(canvas, selection!);
     if (marquee != null) _paintMarquee(canvas, marquee!);
     canvas.restore();
+    final guidePaint = Paint()..color = const Color(0xFF12A6A0).withValues(alpha: 0.9)..strokeWidth = 1;
+    for (final x in alignmentGuidesX) {
+      final sx = transform.worldToScreen(Point2(x, 0)).x;
+      canvas.drawLine(Offset(sx, 0), Offset(sx, size.height), guidePaint);
+    }
+    for (final y in alignmentGuidesY) {
+      final sy = transform.worldToScreen(Point2(0, y)).y;
+      canvas.drawLine(Offset(0, sy), Offset(size.width, sy), guidePaint);
+    }
   }
 
   void _paintGrid(Canvas canvas, Size size) {
@@ -714,5 +782,7 @@ class _CanvasPainter extends CustomPainter {
       oldDelegate.preview != preview ||
       oldDelegate.selection != selection ||
       oldDelegate.showResizeHandles != showResizeHandles ||
-      oldDelegate.marquee != marquee;
+      oldDelegate.marquee != marquee ||
+      oldDelegate.alignmentGuidesX != alignmentGuidesX ||
+      oldDelegate.alignmentGuidesY != alignmentGuidesY;
 }

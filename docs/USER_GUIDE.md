@@ -20,7 +20,7 @@ The workspace is organized around four areas:
 5. Use the hand tool, Space + drag, or the middle mouse button to pan the canvas.
 6. Use the mouse wheel to zoom around the pointer.
 
-The inspector changes according to the selected element. Text can also be edited directly on the canvas by double-clicking it.
+The inspector changes according to the selected element. Text can also be edited directly on the canvas by double-clicking it. Right-click the canvas or an object to open the context menu. It includes clipboard, grouping, alignment, z-order and delete actions.
 
 ## Documents and files
 
@@ -40,6 +40,14 @@ When the application starts, it attempts to restore the latest available session
 
 The header shows the current save state, such as **Сохранено**, **Есть изменения**, **Автосохранено** or **Восстановлено**.
 
+## Groups, alignment and layers
+
+Select two or more objects and choose **Сгруппировать** from the context menu, or press Ctrl/Cmd + G. Clicking a member of a group selects the entire group. Use **Разгруппировать** or Ctrl/Cmd + Shift + G to remove the group relationship without deleting its objects.
+
+The context menu provides left, horizontal-center, right, top, vertical-center and bottom alignment for multi-selection. Alignment uses the combined bounds of the selected objects.
+
+The **Слои** panel is docked below the inspector on the right. It lists topmost objects first. Select a row to select its object (or its entire group), and drag rows to change stacking order. The switches control grid snapping and smart alignment guides. Grid snapping uses a 24-world-unit grid; smart guides snap nearby object edges and centers while moving a selection.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
@@ -47,6 +55,9 @@ The header shows the current save state, such as **Сохранено**, **Ес�
 | Ctrl/Cmd + N | New document |
 | Ctrl/Cmd + O | Open a `.flutterdraw` document |
 | Ctrl/Cmd + S | Save document |
+| Ctrl/Cmd + G | Group selected elements |
+| Ctrl/Cmd + Shift + G | Ungroup selected elements |
+| Right-click | Open the context menu |
 | Ctrl/Cmd + Z | Undo |
 | Ctrl/Cmd + Shift + Z | Redo |
 | Ctrl/Cmd + Y | Redo |

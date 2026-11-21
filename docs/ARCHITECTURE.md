@@ -147,12 +147,14 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 ### M2: Editing
 - [x] Text and style inspector with property editing.
 - [x] Undo/redo with grouped drawing and editing gestures.
-- [ ] Images, grouping and alignment.
+- [ ] Images.
+- [x] Grouping and six-way alignment.
 
 ### M3: Documents
 - [x] Native FlutterDraw JSON format.
 - [x] New/open/save workflow and local autosave recovery.
 - [ ] Excalidraw import/export and fixture suite.
+- [x] Reorderable layers panel, grid snapping and smart alignment guides.
 
 ### M4: Sketch renderer
 - Rough geometric strokes and pressure-aware freehand.

@@ -287,7 +287,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ),
                     ),
                   ),
-                  _InspectorPanel(controller: _controller),
+                  SizedBox(width: 272, child: Column(children: [
+                    Expanded(child: _InspectorPanel(controller: _controller)),
+                    SizedBox(height: 230, child: _LayersPanel(controller: _controller)),
+                  ])),
                 ],
               ),
             ),
@@ -783,6 +786,95 @@ class _InspectorPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LayersPanel extends StatelessWidget {
+  const _LayersPanel({required this.controller});
+  final CanvasEditorController controller;
+
+  String _label(DrawingElement element) {
+    if (element.type == DrawingElementType.text && element.text.trim().isNotEmpty) {
+      final value = element.text.replaceAll('\n', ' ').trim();
+      return value.length > 22 ? '${value.substring(0, 22)}…' : value;
+    }
+    return switch (element.type) {
+      DrawingElementType.rectangle => 'Прямоугольник',
+      DrawingElementType.ellipse => 'Эллипс',
+      DrawingElementType.diamond => 'Ромб',
+      DrawingElementType.line => 'Линия',
+      DrawingElementType.arrow => 'Стрелка',
+      DrawingElementType.freehand => 'Рисунок от руки',
+      DrawingElementType.text => 'Текст',
+    };
+  }
+
+  IconData _icon(DrawingElementType type) => switch (type) {
+    DrawingElementType.rectangle => Icons.rectangle_outlined,
+    DrawingElementType.ellipse => Icons.circle_outlined,
+    DrawingElementType.diamond => Icons.diamond_outlined,
+    DrawingElementType.line => Icons.timeline,
+    DrawingElementType.arrow => Icons.arrow_right_alt,
+    DrawingElementType.freehand => Icons.gesture,
+    DrawingElementType.text => Icons.text_fields,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(0, 0, 12, 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: colors.surface, borderRadius: BorderRadius.circular(12)),
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          final layers = controller.document.elements.reversed.toList();
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.layers_outlined, size: 18),
+              const SizedBox(width: 7),
+              Expanded(child: Text('Слои', style: Theme.of(context).textTheme.titleSmall)),
+              Text('${layers.length}', style: Theme.of(context).textTheme.labelSmall),
+            ]),
+            SwitchListTile(dense: true, contentPadding: EdgeInsets.zero,
+              title: const Text('Привязка к сетке'), value: controller.snapToGrid,
+              onChanged: controller.setSnapToGrid),
+            SwitchListTile(dense: true, contentPadding: EdgeInsets.zero,
+              title: const Text('Умные направляющие'), value: controller.snapToGuides,
+              onChanged: controller.setSnapToGuides),
+            const Divider(height: 8),
+            Expanded(child: layers.isEmpty
+              ? Center(child: Text('Нет объектов', style: Theme.of(context).textTheme.bodySmall))
+              : ReorderableListView.builder(
+                  buildDefaultDragHandles: true,
+                  itemCount: layers.length,
+                  onReorder: (oldIndex, newIndex) {
+                    if (newIndex > oldIndex) newIndex--;
+                    final reordered = [...layers];
+                    final item = reordered.removeAt(oldIndex);
+                    reordered.insert(newIndex, item);
+                    controller.reorderLayers(reordered.map((e) => e.id).toList());
+                  },
+                  itemBuilder: (context, index) {
+                    final element = layers[index];
+                    final selected = controller.selectedElementIds.contains(element.id);
+                    final groupId = element.extraData['flutterdrawGroupId'];
+                    return ListTile(
+                      key: ValueKey(element.id), dense: true,
+                      visualDensity: VisualDensity.compact,
+                      selected: selected, selectedTileColor: colors.secondaryContainer,
+                      leading: Icon(_icon(element.type), size: 17),
+                      title: Text(_label(element), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: groupId is String ? const Text('Группа') : null,
+                      onTap: () => controller.selectElementById(element.id),
+                    );
+                  },
+                )),
+          ]);
+        },
+      ),
     );
   }
 }

@@ -27,6 +27,8 @@ FlutterDraw is under active development. The current application includes:
 - Text elements with inline editing, font, size, alignment and color controls.
 - Selection, marquee multi-selection, move, resize, copy, paste and duplicate.
 - Element opacity, stroke/fill styling and z-order controls.
+- Right-click context menu, grouping/ungrouping and six alignment operations.
+- Grid snapping, smart alignment guides and a reorderable layers panel.
 - Undo/redo history with gesture grouping.
 - Native `.flutterdraw` JSON documents with open, save and new-document actions.
 - Debounced local autosave and recovery of the last editing session.
@@ -56,6 +58,9 @@ Excalidraw import/export, image elements, and PNG/SVG export are not yet impleme
 | Ctrl/Cmd + N | New document |
 | Ctrl/Cmd + O | Open a `.flutterdraw` document |
 | Ctrl/Cmd + S | Save the current document |
+| Ctrl/Cmd + G | Group selected elements |
+| Ctrl/Cmd + Shift + G | Ungroup selected elements |
+| Right-click | Open the canvas context menu |
 
 ## Documentation
 
