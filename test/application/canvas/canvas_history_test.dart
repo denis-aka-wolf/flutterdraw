@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterdraw/application/canvas/canvas_editor_controller.dart';
 import 'package:flutterdraw/application/canvas/canvas_tool.dart';
 import 'package:flutterdraw/core/geometry/viewport_transform.dart';
+import 'package:flutterdraw/domain/document/draw_document.dart';
+import 'package:flutterdraw/domain/elements/drawing_element.dart';
 
 void main() {
   group('Canvas document history', () {

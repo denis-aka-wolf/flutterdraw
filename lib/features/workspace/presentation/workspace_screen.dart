@@ -127,7 +127,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           ? 'Без названия.flutterdraw'
           : (_documentTitle.endsWith('.flutterdraw')
               ? _documentTitle
-              : '$_documentTitle.flutterdraw';
+              : '$_documentTitle.flutterdraw');
       final savedPath = await FilePicker.platform.saveFile(
         dialogTitle: 'Сохранить документ FlutterDraw',
         fileName: suggestedName,
