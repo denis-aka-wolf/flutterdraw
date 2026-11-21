@@ -116,15 +116,21 @@ class _WorkspaceHeader extends StatelessWidget {
             onPressed: controller.sendSelectionToBack,
             icon: const Icon(Icons.flip_to_back),
           ),
-          IconButton(
-            tooltip: 'Отменить',
-            onPressed: null,
-            icon: const Icon(Icons.undo_rounded),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) => IconButton(
+              tooltip: 'Отменить (Ctrl+Z)',
+              onPressed: controller.canUndo ? controller.undo : null,
+              icon: const Icon(Icons.undo_rounded),
+            ),
           ),
-          IconButton(
-            tooltip: 'Повторить',
-            onPressed: null,
-            icon: const Icon(Icons.redo_rounded),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) => IconButton(
+              tooltip: 'Повторить (Ctrl+Shift+Z)',
+              onPressed: controller.canRedo ? controller.redo : null,
+              icon: const Icon(Icons.redo_rounded),
+            ),
           ),
           const SizedBox(width: 8),
           FilledButton.tonalIcon(

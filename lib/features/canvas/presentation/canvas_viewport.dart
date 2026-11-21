@@ -274,6 +274,19 @@ class _CanvasViewportState extends State<CanvasViewport> {
       return KeyEventResult.handled;
     }
 
+    if (isCommand && event.logicalKey == LogicalKeyboardKey.keyZ) {
+      if (HardwareKeyboard.instance.isShiftPressed) {
+        widget.controller.redo();
+      } else {
+        widget.controller.undo();
+      }
+      return KeyEventResult.handled;
+    }
+    if (isCommand && event.logicalKey == LogicalKeyboardKey.keyY) {
+      widget.controller.redo();
+      return KeyEventResult.handled;
+    }
+
     if (isCommand) {
       switch (event.logicalKey) {
         case LogicalKeyboardKey.keyC:

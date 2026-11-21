@@ -32,6 +32,10 @@ class SelectionBounds {
 
 class CanvasEditorController extends ChangeNotifier {
   DrawDocument _document = DrawDocument();
+  final List<DrawDocument> _history = [DrawDocument()];
+  int _historyIndex = 0;
+  String? _lastHistoryMergeKey;
+  DrawDocument? _gestureDocumentBefore;
   CanvasTool _activeTool = CanvasTool.select;
   DrawingElement? _drawingPreview;
   Point2? _drawingStart;
@@ -48,6 +52,8 @@ class CanvasEditorController extends ChangeNotifier {
   bool _isMoving = false;
 
   DrawDocument get document => _document;
+  bool get canUndo => _historyIndex > 0;
+  bool get canRedo => _historyIndex < _history.length - 1;
   CanvasTool get activeTool => _activeTool;
   DrawingElement? get drawingPreview => _drawingPreview;
   Set<String> get selectedElementIds => Set.unmodifiable(_selectedIds);
@@ -94,6 +100,7 @@ class CanvasEditorController extends ChangeNotifier {
   }
 
   void addText(Point2 position, String value, {double fontSize = 24}) {
+    final before = _document;
     final content = value.trim();
     if (content.isEmpty) return;
     _idCounter++;
@@ -115,12 +122,14 @@ class CanvasEditorController extends ChangeNotifier {
     );
     _document = _document.addElement(element);
     _selectedIds..clear()..add(element.id);
+    _recordHistory(before);
     notifyListeners();
   }
 
   void updateSelectedText(String value) {
     final selected = selectedElements;
     if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final before = _document;
     final original = selected.single;
     final content = value;
     final height = math.max(original.fontSize * 1.5,
@@ -129,29 +138,34 @@ class CanvasEditorController extends ChangeNotifier {
       text: content,
       height: height,
     ));
+    _recordHistory(before, mergeKey: 'text-content');
     notifyListeners();
   }
 
   void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, double? opacity, String? fontFamily, String? textAlign}) {
     final selected = selectedElements;
     if (selected.isEmpty) return;
+    final before = _document;
     for (final element in selected) {
       _document = _document.replaceElement(element.copyWith(
         strokeColor: strokeColor, fillColor: fillColor, strokeWidth: strokeWidth,
         opacity: opacity, fontFamily: fontFamily, textAlign: textAlign,
       ));
     }
+    _recordHistory(before, mergeKey: 'element-properties');
     notifyListeners();
   }
 
   void setSelectedTextBlockSize({double? width, double? height}) {
     final selected = selectedElements;
     if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final before = _document;
     final element = selected.single;
     _document = _document.replaceElement(element.copyWith(
       width: width == null ? element.width : width.clamp(40.0, 2000.0).toDouble(),
       height: height == null ? element.height : height.clamp(24.0, 2000.0).toDouble(),
     ));
+    _recordHistory(before, mergeKey: 'text-block-size');
     notifyListeners();
   }
 
@@ -166,6 +180,7 @@ class CanvasEditorController extends ChangeNotifier {
   void setSelectedTextFontSize(double value) {
     final selected = selectedElements;
     if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    final before = _document;
     final original = selected.single;
     final fontSize = value.clamp(10.0, 96.0).toDouble();
     _document = _document.replaceElement(original.copyWith(
@@ -173,6 +188,7 @@ class CanvasEditorController extends ChangeNotifier {
       height: math.max(fontSize * 1.5,
           original.text.split('\n').length * fontSize * 1.45),
     ));
+    _recordHistory(before, mergeKey: 'text-font-size');
     notifyListeners();
   }
 
@@ -191,6 +207,7 @@ class CanvasEditorController extends ChangeNotifier {
   }) {
     final drawingType = _drawingTypeForTool(_activeTool);
     if (drawingType != null) {
+      _gestureDocumentBefore = _document;
       _idCounter++;
       _draftId = 'element-$_idCounter';
       _draftSeed = Object.hash(_idCounter, worldPosition.x, worldPosition.y);
@@ -212,6 +229,7 @@ class CanvasEditorController extends ChangeNotifier {
     }
 
     if (_activeTool != CanvasTool.select) return;
+    _gestureDocumentBefore = _document;
 
     final selectedBounds = selectionBounds;
     if (canResizeSelection && selectedBounds != null) {
@@ -296,6 +314,7 @@ class CanvasEditorController extends ChangeNotifier {
 
   void pointerUp(Point2 worldPosition) {
     if (_drawingStart != null) {
+      final before = _gestureDocumentBefore;
       final preview = _drawingPreview;
       if (preview == null) return;
       DrawingElement completed;
@@ -314,6 +333,7 @@ class CanvasEditorController extends ChangeNotifier {
         _selectedIds
           ..clear()
           ..add(completed.id);
+        if (before != null) _recordHistory(before);
       }
       notifyListeners();
       return;
@@ -334,6 +354,7 @@ class CanvasEditorController extends ChangeNotifier {
     }
 
     if (_gestureStart != null) {
+      final before = _gestureDocumentBefore;
       final handle = _activeResizeHandle;
       if (handle != null && _gestureOriginals.length == 1) {
         _resizeElement(_gestureOriginals.single, handle, worldPosition);
@@ -345,15 +366,18 @@ class CanvasEditorController extends ChangeNotifier {
         }
       }
       _clearGesture();
+      if (before != null) _recordHistory(before);
       notifyListeners();
     }
   }
 
   void deleteSelection() {
     if (_selectedIds.isEmpty) return;
+    final before = _document;
     _document = _document.removeElements(_selectedIds);
     _selectedIds.clear();
     _clearGesture();
+    _recordHistory(before);
     notifyListeners();
   }
 
@@ -372,15 +396,17 @@ class CanvasEditorController extends ChangeNotifier {
 
   void paste() {
     if (_clipboard.isEmpty) return;
+    final before = _document;
     final copies = <DrawingElement>[];
     for (final element in _clipboard) {
       _idCounter++;
       copies.add(element.translated(20, 20, newId: 'element-$_idCounter'));
     }
-    _document = DrawDocument(elements: [..._document.elements, ...copies]);
+    _document = DrawDocument(elements: [..._document.elements, ...copies], extraData: _document.extraData);
     _selectedIds
       ..clear()
       ..addAll(copies.map((element) => element.id));
+    _recordHistory(before);
     notifyListeners();
   }
 
@@ -391,13 +417,17 @@ class CanvasEditorController extends ChangeNotifier {
 
   void bringSelectionToFront() {
     if (_selectedIds.isEmpty) return;
+    final before = _document;
     _document = _document.reorder(_selectedIds, toFront: true);
+    _recordHistory(before);
     notifyListeners();
   }
 
   void sendSelectionToBack() {
     if (_selectedIds.isEmpty) return;
+    final before = _document;
     _document = _document.reorder(_selectedIds, toFront: false);
+    _recordHistory(before);
     notifyListeners();
   }
 
@@ -406,6 +436,49 @@ class CanvasEditorController extends ChangeNotifier {
     _rollbackSelectionGesture();
     _clearGesture();
     notifyListeners();
+  }
+
+  void undo() {
+    if (!canUndo) return;
+    _historyIndex--;
+    _restoreHistoryDocument();
+  }
+
+  void redo() {
+    if (!canRedo) return;
+    _historyIndex++;
+    _restoreHistoryDocument();
+  }
+
+  void _restoreHistoryDocument() {
+    _document = _history[_historyIndex];
+    final validIds = _document.elements.map((element) => element.id).toSet();
+    _selectedIds.removeWhere((id) => !validIds.contains(id));
+    _clearGesture();
+    _lastHistoryMergeKey = null;
+    notifyListeners();
+  }
+
+  void _recordHistory(DrawDocument before, {String? mergeKey}) {
+    if (_sameDocument(before, _document)) return;
+    if (_historyIndex < _history.length - 1) {
+      _history.removeRange(_historyIndex + 1, _history.length);
+    }
+    if (mergeKey != null && mergeKey == _lastHistoryMergeKey && _historyIndex > 0) {
+      _history[_historyIndex] = _document;
+    } else {
+      _history.add(_document);
+      _historyIndex = _history.length - 1;
+    }
+    _lastHistoryMergeKey = mergeKey;
+  }
+
+  bool _sameDocument(DrawDocument a, DrawDocument b) {
+    if (a.elements.length != b.elements.length) return false;
+    for (var i = 0; i < a.elements.length; i++) {
+      if (!identical(a.elements[i], b.elements[i])) return false;
+    }
+    return true;
   }
 
   DrawingElementType? _drawingTypeForTool(CanvasTool tool) {
@@ -577,5 +650,6 @@ class CanvasEditorController extends ChangeNotifier {
     _gestureOriginals = [];
     _activeResizeHandle = null;
     _isMoving = false;
+    _gestureDocumentBefore = null;
   }
 }
