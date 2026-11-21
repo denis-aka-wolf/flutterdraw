@@ -136,6 +136,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
   }
 
   void _beginInlineTextEdit(Point2 position) {
+    if (_editingTextId != null) return;
     final element = widget.controller.selectElementAt(position, tolerance: 10 / _transform.scale);
     if (element == null || element.type != DrawingElementType.text) return;
     _inlineTextController?.dispose();
@@ -263,10 +264,15 @@ class _CanvasViewportState extends State<CanvasViewport> {
       return KeyEventResult.handled;
     }
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
-
-    final isCommand =
-        HardwareKeyboard.instance.isControlPressed ||
+    final isCommand = HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
+    if (_editingTextId != null &&
+        (event.logicalKey == LogicalKeyboardKey.escape ||
+            (isCommand && event.logicalKey == LogicalKeyboardKey.enter))) {
+      _finishInlineTextEdit();
+      return KeyEventResult.handled;
+    }
+
     if (isCommand) {
       switch (event.logicalKey) {
         case LogicalKeyboardKey.keyC:

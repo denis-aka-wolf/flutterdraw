@@ -350,7 +350,7 @@ class _InspectorPanel extends StatelessWidget {
                   const SizedBox(height: 14),
                   _section(context, 'Шрифт'),
                   DropdownButtonFormField<String>(
-                    value: element.fontFamily,
+                    value: const ['Roboto', 'Arial', 'Georgia', 'Courier New', 'Times New Roman'].contains(element.fontFamily) ? element.fontFamily : 'Roboto',
                     isExpanded: true,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(), isDense: true,
@@ -380,7 +380,7 @@ class _InspectorPanel extends StatelessWidget {
                       ButtonSegment(value: 'center', icon: Icon(Icons.format_align_center)),
                       ButtonSegment(value: 'right', icon: Icon(Icons.format_align_right)),
                     ],
-                    selected: {element.textAlign},
+                    selected: {const ['left', 'center', 'right'].contains(element.textAlign) ? element.textAlign : 'left'},
                     onSelectionChanged: (values) =>
                       controller.updateSelectedProperties(textAlign: values.first),
                   ),
