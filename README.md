@@ -45,6 +45,10 @@ Text, images, document persistence, undo/redo and Excalidraw import/export remai
 | Ctrl/Cmd + ] | Bring selection to front |
 | Ctrl/Cmd + [ | Send selection to back |
 
+## Documentation
+
+- [Project Wiki](https://github.com/denis-aka-wolf/flutterdraw/wiki) - guides, project pages and development documentation.
+
 ## Architecture
 
 See docs/ARCHITECTURE.md for the architecture, module boundaries, document model and implementation roadmap.
