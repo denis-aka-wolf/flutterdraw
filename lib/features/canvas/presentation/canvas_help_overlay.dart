@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Компактная справка по управлению холстом с сохранением размера.
@@ -73,14 +73,14 @@ class _CanvasHelpOverlayState extends State<CanvasHelpOverlay> {
         curve: Curves.easeOutCubic,
         alignment: Alignment.topRight,
         child: Material(
-          color: colors.surface.withOpacity(0.88),
+          color: colors.surface.withValues(alpha: 0.88),
           elevation: 5,
-          shadowColor: Colors.black.withOpacity(0.14),
+          shadowColor: Colors.black.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(10),
           clipBehavior: Clip.antiAlias,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              border: Border.all(color: colors.outlineVariant.withOpacity(0.65)),
+              border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.65)),
               borderRadius: BorderRadius.circular(10),
             ),
             child: _expanded

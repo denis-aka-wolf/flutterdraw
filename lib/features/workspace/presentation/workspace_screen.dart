@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
@@ -85,7 +85,7 @@ class _WorkspaceHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
-          bottom: BorderSide(color: colors.outlineVariant.withOpacity(0.4)),
+          bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       child: Row(
@@ -352,7 +352,7 @@ class _InspectorPanel extends StatelessWidget {
                   const SizedBox(height: 14),
                   _section(context, 'Шрифт'),
                   DropdownButtonFormField<String>(
-                    value: const ['Roboto', 'Arial', 'Georgia', 'Courier New', 'Times New Roman'].contains(element.fontFamily) ? element.fontFamily : 'Roboto',
+                    initialValue: const ['Roboto', 'Arial', 'Georgia', 'Courier New', 'Times New Roman'].contains(element.fontFamily) ? element.fontFamily : 'Roboto',
                     isExpanded: true,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(), isDense: true,
@@ -464,7 +464,7 @@ class _InspectorPanel extends StatelessWidget {
             decoration: const InputDecoration(
               suffixText: 'px', isDense: true, border: OutlineInputBorder(),
             ),
-            onSubmitted: (raw) {
+            onFieldSubmitted: (raw) {
               final parsed = double.tryParse(raw);
               if (parsed != null && parsed.isFinite) onSubmitted(parsed);
             },

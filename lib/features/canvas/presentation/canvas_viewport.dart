@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
@@ -169,7 +169,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
         textAlign: _textAlignFor(element.textAlign),
         style: TextStyle(fontFamily: element.fontFamily,
           fontSize: element.fontSize * _transform.scale,
-          color: Color(element.strokeColor).withOpacity(element.opacity)),
+          color: Color(element.strokeColor).withValues(alpha: element.opacity)),
         decoration: const InputDecoration(contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(), filled: true, fillColor: Color(0x22FFFFFF)),
         onSubmitted: (_) => _finishInlineTextEdit(),
@@ -462,7 +462,7 @@ class _CanvasPainter extends CustomPainter {
         text: TextSpan(
           text: element.text,
           style: TextStyle(
-            color: Color(element.strokeColor).withOpacity(element.opacity * opacity),
+            color: Color(element.strokeColor).withValues(alpha: element.opacity * opacity),
             fontSize: element.fontSize,
             fontFamily: element.fontFamily,
             height: 1.2,
@@ -519,7 +519,7 @@ class _CanvasPainter extends CustomPainter {
     }
     path.close();
     if (element.fillColor != 0x00000000) {
-      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withOpacity(element.opacity * opacity)..style = PaintingStyle.fill);
+      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withValues(alpha: element.opacity * opacity)..style = PaintingStyle.fill);
     }
     canvas.drawPath(path, _strokePaint(element, opacity));
   }
@@ -625,7 +625,7 @@ class _CanvasPainter extends CustomPainter {
   }
 
   Paint _strokePaint(DrawingElement element, double opacity) => Paint()
-    ..color = Color(element.strokeColor).withOpacity(element.opacity * opacity)
+    ..color = Color(element.strokeColor).withValues(alpha: element.opacity * opacity)
     ..style = PaintingStyle.stroke
     ..strokeWidth = element.strokeWidth
     ..strokeCap = StrokeCap.round
@@ -686,7 +686,7 @@ class _CanvasPainter extends CustomPainter {
       bounds.right,
       bounds.bottom,
     );
-    canvas.drawRect(rect, paint..color = paint.color.withOpacity(0.10));
+    canvas.drawRect(rect, paint..color = paint.color.withValues(alpha: 0.10));
     canvas.drawRect(rect, border);
   }
 
