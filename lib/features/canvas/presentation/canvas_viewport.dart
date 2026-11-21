@@ -29,9 +29,14 @@ class _CanvasViewportState extends State<CanvasViewport> {
   Offset? _lastPointerPosition;
   Offset? _lastPanZoomOffset;
   double _lastPanZoomScale = 1;
+  String? _editingTextId;
+  TextEditingController? _inlineTextController;
+  FocusNode? _inlineTextFocus;
 
   @override
   void dispose() {
+    _inlineTextController?.dispose();
+    _inlineTextFocus?.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -128,6 +133,56 @@ class _CanvasViewportState extends State<CanvasViewport> {
     textController.dispose();
     if (!mounted || value == null || value.trim().isEmpty) return;
     widget.controller.addText(position, value);
+  }
+
+  void _beginInlineTextEdit(Point2 position) {
+    final element = widget.controller.selectElementAt(position, tolerance: 10 / _transform.scale);
+    if (element == null || element.type != DrawingElementType.text) return;
+    _inlineTextController?.dispose();
+    _inlineTextFocus?.dispose();
+    _inlineTextController = TextEditingController(text: element.text);
+    _inlineTextFocus = FocusNode();
+    setState(() => _editingTextId = element.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inlineTextFocus?.requestFocus();
+    });
+  }
+
+  Widget _buildInlineTextEditor() {
+    DrawingElement? element;
+    for (final item in widget.controller.document.elements) {
+      if (item.id == _editingTextId) { element = item; break; }
+    }
+    if (element == null) return const SizedBox.shrink();
+    final screen = _transform.worldToScreen(Point2(element.x, element.y));
+    return Positioned(
+      left: screen.x, top: screen.y,
+      width: math.max(120.0, element.width * _transform.scale),
+      height: math.max(48.0, element.height * _transform.scale),
+      child: Material(color: Colors.transparent, child: TextField(
+        controller: _inlineTextController, focusNode: _inlineTextFocus,
+        maxLines: null, expands: true,
+        textAlign: _textAlignFor(element.textAlign),
+        style: TextStyle(fontFamily: element.fontFamily,
+          fontSize: element.fontSize * _transform.scale,
+          color: Color(element.strokeColor).withOpacity(element.opacity)),
+        decoration: const InputDecoration(contentPadding: EdgeInsets.zero,
+          border: OutlineInputBorder(), filled: true, fillColor: Color(0x22FFFFFF)),
+        onSubmitted: (_) => _finishInlineTextEdit(),
+      )),
+    );
+  }
+
+  void _finishInlineTextEdit() {
+    final id = _editingTextId;
+    final value = _inlineTextController?.text ?? '';
+    if (id != null && widget.controller.selectedElements.any((e) => e.id == id)) {
+      widget.controller.updateSelectedText(value);
+    }
+    setState(() => _editingTextId = null);
+    _inlineTextController?.dispose(); _inlineTextController = null;
+    _inlineTextFocus?.dispose(); _inlineTextFocus = null;
+    _focusNode.requestFocus();
   }
 
   void _handlePointerMove(PointerMoveEvent event) {
@@ -273,7 +328,10 @@ class _CanvasViewportState extends State<CanvasViewport> {
                       : SystemMouseCursors.precise;
           return MouseRegion(
             cursor: cursor,
-            child: Listener(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onDoubleTapDown: (details) => _beginInlineTextEdit(_toWorld(details.localPosition)),
+              child: Listener(
               behavior: HitTestBehavior.opaque,
               onPointerDown: _handlePointerDown,
               onPointerMove: _handlePointerMove,
@@ -285,20 +343,25 @@ class _CanvasViewportState extends State<CanvasViewport> {
               onPointerPanZoomEnd: _handlePanZoomEnd,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  return CustomPaint(
-                    size: Size(constraints.maxWidth, constraints.maxHeight),
-                    painter: _CanvasPainter(
-                      transform: _transform,
-                      backgroundColor: backgroundColor,
-                      dotColor: dotColor,
-                      elements: widget.controller.document.elements,
-                      preview: widget.controller.drawingPreview,
-                      selection: widget.controller.selectionBounds,
-                      showResizeHandles: widget.controller.canResizeSelection,
-                      marquee: widget.controller.marqueeBounds,
-                    ),
+                  return Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      Positioned.fill(child: CustomPaint(
+                        painter: _CanvasPainter(
+                          transform: _transform, backgroundColor: backgroundColor,
+                          dotColor: dotColor, elements: widget.controller.document.elements,
+                          preview: widget.controller.drawingPreview,
+                          selection: widget.controller.selectionBounds,
+                          showResizeHandles: widget.controller.canResizeSelection,
+                          marquee: widget.controller.marqueeBounds,
+                          editingTextId: _editingTextId,
+                        ),
+                      )),
+                      if (_editingTextId != null) _buildInlineTextEditor(),
+                    ],
                   );
                 },
+              ),
               ),
             ),
           );
@@ -307,6 +370,12 @@ class _CanvasViewportState extends State<CanvasViewport> {
     );
   }
 }
+
+TextAlign _textAlignFor(String value) => switch (value) {
+  'center' => TextAlign.center,
+  'right' => TextAlign.right,
+  _ => TextAlign.left,
+};
 
 class _CanvasPainter extends CustomPainter {
   const _CanvasPainter({
@@ -318,6 +387,7 @@ class _CanvasPainter extends CustomPainter {
     required this.selection,
     required this.showResizeHandles,
     required this.marquee,
+    required this.editingTextId,
   });
 
   final ViewportTransform transform;
@@ -328,6 +398,7 @@ class _CanvasPainter extends CustomPainter {
   final SelectionBounds? selection;
   final bool showResizeHandles;
   final SelectionBounds? marquee;
+  final String? editingTextId;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -377,16 +448,19 @@ class _CanvasPainter extends CustomPainter {
     double opacity = 1,
   }) {
     if (element.type == DrawingElementType.text) {
+      if (element.id == editingTextId) return;
       final painter = TextPainter(
         text: TextSpan(
           text: element.text,
           style: TextStyle(
-            color: Color(element.strokeColor).withOpacity(opacity),
+            color: Color(element.strokeColor).withOpacity(element.opacity * opacity),
             fontSize: element.fontSize,
+            fontFamily: element.fontFamily,
             height: 1.2,
           ),
         ),
         textDirection: TextDirection.ltr,
+        textAlign: _textAlignFor(element.textAlign),
       )..layout(maxWidth: math.max(40.0, element.width));
       painter.paint(canvas, Offset(element.x, element.y));
       return;
@@ -432,6 +506,9 @@ class _CanvasPainter extends CustomPainter {
         break;
     }
     path.close();
+    if (element.fillColor != 0x00000000) {
+      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withOpacity(element.opacity * opacity)..style = PaintingStyle.fill);
+    }
     canvas.drawPath(path, _strokePaint(element, opacity));
   }
 
@@ -536,7 +613,7 @@ class _CanvasPainter extends CustomPainter {
   }
 
   Paint _strokePaint(DrawingElement element, double opacity) => Paint()
-    ..color = Color(element.strokeColor).withOpacity(opacity)
+    ..color = Color(element.strokeColor).withOpacity(element.opacity * opacity)
     ..style = PaintingStyle.stroke
     ..strokeWidth = element.strokeWidth
     ..strokeCap = StrokeCap.round
