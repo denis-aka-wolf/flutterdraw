@@ -65,6 +65,25 @@ void main() {
       controller.dispose();
     });
 
+    test('loading a document resets history and advances generated ids', () {
+      final controller = CanvasEditorController();
+      controller.addText(const Point2(0, 0), 'Temporary');
+      controller.loadDocument(DrawDocument(elements: [
+        DrawingElement(
+          id: 'element-12',
+          type: DrawingElementType.rectangle,
+          x: 0, y: 0, width: 40, height: 30, seed: 12,
+        ),
+      ]));
+      expect(controller.canUndo, isFalse);
+      expect(controller.canRedo, isFalse);
+      controller.addText(const Point2(50, 50), 'New');
+      expect(controller.document.elements.last.id, 'element-13');
+      controller.undo();
+      expect(controller.document.elements, hasLength(1));
+      controller.dispose();
+    });
+
     test('cancelled gestures do not enter history', () {
       final controller = CanvasEditorController()..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(0, 0));

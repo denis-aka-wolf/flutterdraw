@@ -127,7 +127,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           ? 'Без названия.flutterdraw'
           : (_documentTitle.endsWith('.flutterdraw')
               ? _documentTitle
-              : '$ _documentTitle.flutterdraw').replaceFirst(r'$ ', '');
+              : '$_documentTitle.flutterdraw';
       final savedPath = await FilePicker.platform.saveFile(
         dialogTitle: 'Сохранить документ FlutterDraw',
         fileName: suggestedName,
@@ -138,7 +138,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       if (savedPath == null) return;
       final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
       if (mounted) setState(() => _documentTitle = fileName);
-      _lastAutosavedContent = _codec.encode(_controller.document, pretty: false);
+      _lastAutosavedContent = null;
       await _writeAutosave();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
