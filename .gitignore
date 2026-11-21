@@ -3,6 +3,7 @@
 .packages
 .pub/
 build/
+dist/
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
