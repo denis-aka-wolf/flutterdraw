@@ -29,6 +29,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   String _documentTitle = 'Без названия';
   bool _restoringSession = false;
   String? _lastAutosavedContent;
+  String? _lastAutosavedTitle;
 
   @override
   void initState() {
@@ -54,13 +55,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _writeAutosave() async {
     final content = _codec.encode(_controller.document, pretty: false);
-    if (content == _lastAutosavedContent) return;
+    if (content == _lastAutosavedContent &&
+        _documentTitle == _lastAutosavedTitle) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_autosaveKey, jsonEncode({
       'title': _documentTitle,
       'document': jsonDecode(content),
     }));
     _lastAutosavedContent = content;
+    _lastAutosavedTitle = _documentTitle;
   }
 
   Future<void> _restoreSession() async {
@@ -81,6 +84,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       });
       _controller.loadDocument(document);
       _lastAutosavedContent = _codec.encode(document, pretty: false);
+      _lastAutosavedTitle = _documentTitle;
     } on Object {
       // A damaged recovery snapshot must not prevent the editor from opening.
     } finally {
@@ -110,6 +114,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _controller.loadDocument(document);
       setState(() => _documentTitle = file.name);
       _lastAutosavedContent = null;
+      _lastAutosavedTitle = null;
       _onDocumentChanged();
     } on Object catch (error) {
       if (!mounted) return;
@@ -139,6 +144,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
       if (mounted) setState(() => _documentTitle = fileName);
       _lastAutosavedContent = null;
+      _lastAutosavedTitle = null;
       await _writeAutosave();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
