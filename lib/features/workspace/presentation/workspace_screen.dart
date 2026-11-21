@@ -30,6 +30,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   bool _restoringSession = false;
   String? _lastAutosavedContent;
   String? _lastAutosavedTitle;
+  String? _savedContent;
+  bool _isSaving = false;
+  String _saveStatus = 'Сохранено';
 
   @override
   void initState() {
@@ -47,8 +50,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     super.dispose();
   }
 
+  bool get _hasUnsavedChanges =>
+      _savedContent != _codec.encode(_controller.document, pretty: false);
+
   void _onDocumentChanged() {
     if (_restoringSession) return;
+    if (mounted) {
+      setState(() => _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено');
+    }
     _autosaveTimer?.cancel();
     _autosaveTimer = Timer(const Duration(milliseconds: 700), _writeAutosave);
   }
@@ -64,6 +73,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }));
     _lastAutosavedContent = content;
     _lastAutosavedTitle = _documentTitle;
+    if (mounted) setState(() => _saveStatus = 'Автосохранено');
   }
 
   Future<void> _restoreSession() async {
@@ -85,6 +95,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _controller.loadDocument(document);
       _lastAutosavedContent = _codec.encode(document, pretty: false);
       _lastAutosavedTitle = _documentTitle;
+      _savedContent = null;
+      if (mounted) setState(() => _saveStatus = 'Восстановлено');
     } on Object {
       // A damaged recovery snapshot must not prevent the editor from opening.
     } finally {
@@ -92,12 +104,68 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
-  void _newDocument() {
+  Future<void> _newDocument() async {
+    if (!await _confirmDiscardChanges()) return;
+    _autosaveTimer?.cancel();
     _controller.newDocument();
-    setState(() => _documentTitle = 'Без названия');
+    _savedContent = _codec.encode(_controller.document, pretty: false);
+    setState(() {
+      _documentTitle = 'Без названия';
+      _saveStatus = 'Сохранено';
+    });
+    _lastAutosavedContent = null;
+    _lastAutosavedTitle = null;
+    _onDocumentChanged();
+  }
+
+  Future<bool> _confirmDiscardChanges() async {
+    if (!_hasUnsavedChanges) return true;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Несохранённые изменения'),
+        content: const Text(
+          'В документе есть изменения. Продолжить без сохранения?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Отмена'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Продолжить'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  KeyEventResult _handleWorkspaceKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final primaryContext = FocusManager.instance.primaryFocus?.context;
+    if (primaryContext?.widget is EditableText) return KeyEventResult.ignored;
+    final isCommand = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (!isCommand) return KeyEventResult.ignored;
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.keyN:
+        _newDocument();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyO:
+        _openDocument();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyS:
+        _saveDocument();
+        return KeyEventResult.handled;
+      default:
+        return KeyEventResult.ignored;
+    }
   }
 
   Future<void> _openDocument() async {
+    if (!await _confirmDiscardChanges()) return;
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -112,7 +180,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       }
       final document = _codec.decode(utf8.decode(bytes));
       _controller.loadDocument(document);
-      setState(() => _documentTitle = file.name);
+      _savedContent = _codec.encode(document, pretty: false);
+      setState(() {
+        _documentTitle = file.name;
+        _saveStatus = 'Сохранено';
+      });
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       _onDocumentChanged();
@@ -125,6 +197,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Future<void> _saveDocument() async {
+    if (_isSaving) return;
+    setState(() {
+      _isSaving = true;
+      _saveStatus = 'Сохранение…';
+    });
     try {
       final content = _codec.encode(_controller.document);
       final bytes = Uint8List.fromList(utf8.encode(content));
@@ -142,7 +219,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       );
       if (savedPath == null) return;
       final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
-      if (mounted) setState(() => _documentTitle = fileName);
+      _savedContent = _codec.encode(_controller.document, pretty: false);
+      if (mounted) setState(() {
+        _documentTitle = fileName;
+        _saveStatus = 'Сохранено';
+      });
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       await _writeAutosave();
@@ -155,12 +236,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
       );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Focus(
+      onKeyEvent: _handleWorkspaceKeyEvent,
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -170,6 +255,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onNew: _newDocument,
               onOpen: _openDocument,
               onSave: _saveDocument,
+              saveStatus: _saveStatus,
             ),
             Expanded(
               child: Row(
@@ -202,6 +288,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -213,6 +300,7 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onNew,
     required this.onOpen,
     required this.onSave,
+    required this.saveStatus,
   });
 
   final CanvasEditorController controller;
@@ -220,6 +308,7 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onNew;
   final VoidCallback onOpen;
   final VoidCallback onSave;
+  final String saveStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +335,67 @@ class _WorkspaceHeader extends StatelessWidget {
           ),
           const SizedBox(width: 24),
           Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 12),
+          Text(saveStatus, style: Theme.of(context).textTheme.labelSmall),
           const Spacer(),
+          PopupMenuButton<String>(
+            tooltip: 'Файл',
+            onSelected: (value) {
+              switch (value) {
+                case 'new':
+                  onNew();
+                  break;
+                case 'open':
+                  onOpen();
+                  break;
+                case 'save':
+                  onSave();
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'new',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.note_add_outlined),
+                  title: Text('Новый'),
+                  trailing: Text('Ctrl+N'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'open',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.folder_open_outlined),
+                  title: Text('Открыть…'),
+                  trailing: Text('Ctrl+O'),
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'save',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.save_outlined),
+                  title: Text('Сохранить'),
+                  trailing: Text('Ctrl+S'),
+                ),
+              ),
+            ],
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.menu),
+                  SizedBox(width: 6),
+                  Text('Файл'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Дублировать (Ctrl+D)',
             onPressed: controller.duplicateSelection,
