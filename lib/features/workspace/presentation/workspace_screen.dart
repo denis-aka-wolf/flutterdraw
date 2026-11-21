@@ -38,6 +38,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   void initState() {
     super.initState();
     _controller = CanvasEditorController();
+    _savedContent = _codec.encode(_controller.document, pretty: false);
     _controller.addListener(_onDocumentChanged);
     _restoreSession();
   }
@@ -73,7 +74,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }));
     _lastAutosavedContent = content;
     _lastAutosavedTitle = _documentTitle;
-    if (mounted) setState(() => _saveStatus = 'Автосохранено');
+    if (mounted) {
+      setState(() => _saveStatus =
+          _hasUnsavedChanges ? 'Автосохранено' : 'Сохранено');
+    }
   }
 
   Future<void> _restoreSession() async {
