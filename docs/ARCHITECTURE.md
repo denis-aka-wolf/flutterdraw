@@ -145,12 +145,14 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 - Copy/paste, duplicate, bring to front and send to back.
 
 ### M2: Editing
-- Text and images, style inspector, property editing.
-- Undo/redo, grouping and alignment.
+- [x] Text and style inspector with property editing.
+- [x] Undo/redo with grouped drawing and editing gestures.
+- [ ] Images, grouping and alignment.
 
 ### M3: Documents
-- Native format, open/save, autosave.
-- Excalidraw import/export and fixture suite.
+- [x] Native FlutterDraw JSON format.
+- [x] New/open/save workflow and local autosave recovery.
+- [ ] Excalidraw import/export and fixture suite.
 
 ### M4: Sketch renderer
 - Rough geometric strokes and pressure-aware freehand.

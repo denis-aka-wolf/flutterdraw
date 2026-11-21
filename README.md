@@ -20,17 +20,20 @@ Windows, macOS, Linux, Web, Android and iOS.
 
 ## Project status
 
-Early development. The canvas foundation and first drawing/editing tools are implemented:
+FlutterDraw is under active development. The current application includes:
 
-- Rectangle, ellipse and diamond shapes.
-- Straight lines, arrows and freehand strokes.
-- Single and marquee multi-selection.
-- Moving and resizing selected shapes.
-- Copy, paste and duplicate.
-- Bring selected objects to front or send them to back.
-- Zoom, pan and adaptive canvas grid.
+- Infinite canvas with adaptive grid, cursor-centered zoom and pan.
+- Rectangle, ellipse, diamond, line, arrow and freehand drawing tools.
+- Text elements with inline editing, font, size, alignment and color controls.
+- Selection, marquee multi-selection, move, resize, copy, paste and duplicate.
+- Element opacity, stroke/fill styling and z-order controls.
+- Undo/redo history with gesture grouping.
+- Native `.flutterdraw` JSON documents with open, save and new-document actions.
+- Debounced local autosave and recovery of the last editing session.
+- File menu and keyboard shortcuts for document operations.
 
-Text, images, document persistence, undo/redo and Excalidraw import/export remain planned work.
+Excalidraw import/export, image elements, and PNG/SVG export are not yet implemented.
+
 
 ## Keyboard shortcuts
 
@@ -48,15 +51,22 @@ Text, images, document persistence, undo/redo and Excalidraw import/export remai
 | Ctrl/Cmd + D | Duplicate selected elements |
 | Ctrl/Cmd + ] | Bring selection to front |
 | Ctrl/Cmd + [ | Send selection to back |
+| Ctrl/Cmd + Z | Undo |
+| Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y | Redo |
+| Ctrl/Cmd + N | New document |
+| Ctrl/Cmd + O | Open a `.flutterdraw` document |
+| Ctrl/Cmd + S | Save the current document |
 
 ## Documentation
 
 - [Project Wiki](https://github.com/denis-aka-wolf/flutterdraw/wiki) - guides, project pages and development documentation.
+- [User guide](docs/USER_GUIDE.md) - canvas tools, editing, files, autosave and keyboard shortcuts.
+- [Architecture](docs/ARCHITECTURE.md) - modules, document model and implementation roadmap.
 - [Local release build guide](docs/BUILDING_RELEASES.md) - build Windows, Android and Web packages without GitHub Actions.
 
 ## Architecture
 
-See docs/ARCHITECTURE.md for the architecture, module boundaries, document model and implementation roadmap.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the architecture, module boundaries, document model and implementation roadmap.
 
 ## Development
 
