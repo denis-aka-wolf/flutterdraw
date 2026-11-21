@@ -111,7 +111,7 @@ class CanvasEditorController extends ChangeNotifier {
     _clipboard.clear();
     _idCounter = 0;
     for (final element in document.elements) {
-      final match = RegExp(r'^element-([0-9]+)
+      final match = RegExp(r'^element-([0-9]+)').firstMatch(element.id);
     final before = _document;
     final content = value.trim();
     if (content.isEmpty) return;
