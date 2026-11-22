@@ -512,7 +512,7 @@ class CanvasEditorController extends ChangeNotifier {
     final ordered = topToBottomIds.reversed.where(byId.containsKey).map((id) => byId[id]!).toList();
     if (ordered.length != _document.elements.length) return;
     final before = _document;
-    _document = DrawDocument(elements: ordered, extraData: _document.extraData);
+    _document = DrawDocument(elements: ordered, assets: _document.assets, extraData: _document.extraData);
     _recordHistory(before);
     notifyListeners();
   }
@@ -555,7 +555,7 @@ class CanvasEditorController extends ChangeNotifier {
       }
       copies.add(copy);
     }
-    _document = DrawDocument(elements: [..._document.elements, ...copies], extraData: _document.extraData);
+    _document = DrawDocument(elements: [..._document.elements, ...copies], assets: _document.assets, extraData: _document.extraData);
     _selectedIds
       ..clear()
       ..addAll(copies.map((element) => element.id));
