@@ -147,8 +147,7 @@ class ExcalidrawCodec {
       result['baseline'] = original['baseline'] ?? element.fontSize;
     }
     if (groupId is String && groupId.isNotEmpty) {
-      final oldGroups = original['groupIds'];
-      result['groupIds'] = oldGroups is List && oldGroups.isNotEmpty ? oldGroups : [groupId];
+      result['groupIds'] = [groupId];
     } else {
       result['groupIds'] = <String>[];
     }
