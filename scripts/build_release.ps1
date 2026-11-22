@@ -20,22 +20,22 @@ function Invoke-Checked {
     Write-Host "`n==> $Description" -ForegroundColor Cyan
     & $Command @Arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "$Description завершилась с кодом $LASTEXITCODE."
+        throw "$Description failed with exit code $LASTEXITCODE."
     }
 }
 
 if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
-    throw "Flutter не найден в PATH. Установи Flutter SDK и добавь папку bin в PATH."
+    throw "Flutter was not found in PATH. Install the Flutter SDK and add its bin directory to PATH."
 }
 
 if (-not (Test-Path (Join-Path $ProjectRoot "pubspec.yaml"))) {
-    throw "Не найден pubspec.yaml. Запусти скрипт из репозитория FlutterDraw."
+    throw "pubspec.yaml was not found. Run this script from the FlutterDraw repository."
 }
 
 $Pubspec = Get-Content (Join-Path $ProjectRoot "pubspec.yaml") -Raw
 $VersionMatch = [regex]::Match($Pubspec, '(?m)^version:\s*["'']?([0-9]+\.[0-9]+\.[0-9]+(?:\+[0-9]+)?)')
 if (-not $VersionMatch.Success) {
-    throw "Не удалось прочитать version из pubspec.yaml."
+    throw "Could not read version from pubspec.yaml."
 }
 $Version = $VersionMatch.Groups[1].Value
 $ReleaseFolderName = "v" + ($Version -replace '\+.*$', '')
@@ -60,12 +60,12 @@ if ($MissingFolders.Count -gt 0) {
     $CreatePlatforms = "windows,android,web"
     Invoke-Checked -Command "flutter" -Arguments @(
         "create", "--platforms=$CreatePlatforms", "--project-name", "flutterdraw", "."
-    ) -Description "Подготовка платформенных проектов"
+    ) -Description "Preparing platform projects"
 }
 
-Invoke-Checked -Command "flutter" -Arguments @("pub", "get") -Description "Установка зависимостей"
-Invoke-Checked -Command "flutter" -Arguments @("analyze") -Description "Статический анализ"
-Invoke-Checked -Command "flutter" -Arguments @("test") -Description "Запуск тестов"
+Invoke-Checked -Command "flutter" -Arguments @("pub", "get") -Description "Installing dependencies"
+Invoke-Checked -Command "flutter" -Arguments @("analyze") -Description "Running static analysis"
+Invoke-Checked -Command "flutter" -Arguments @("test") -Description "Running tests"
 
 if (Test-Path $ReleaseRoot) {
     Remove-Item $ReleaseRoot -Recurse -Force
@@ -74,33 +74,33 @@ New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 
 $FlutterVersion = (& flutter --version | Select-Object -First 1)
 if ($LASTEXITCODE -ne 0) {
-    throw "Не удалось определить версию Flutter."
+    throw "Could not determine the Flutter version."
 }
 
 foreach ($Platform in $Platforms) {
     switch ($Platform) {
         "Windows" {
-            Invoke-Checked -Command "flutter" -Arguments @("build", "windows", "--release") -Description "Сборка Windows"
+            Invoke-Checked -Command "flutter" -Arguments @("build", "windows", "--release") -Description "Building Windows"
             $BuildFolder = Join-Path $ProjectRoot "build\windows\x64\runner\Release"
             if (-not (Test-Path (Join-Path $BuildFolder "flutterdraw.exe"))) {
-                throw "Не найден flutterdraw.exe в $BuildFolder. Проверь установку Visual Studio с workload Desktop development with C++."
+                throw "flutterdraw.exe was not found in $BuildFolder. Check that Visual Studio with the Desktop development with C++ workload is installed."
             }
             $Archive = Join-Path $ReleaseRoot "flutterdraw-windows-x64.zip"
             Compress-Archive -Path (Join-Path $BuildFolder "*") -DestinationPath $Archive -CompressionLevel Optimal
         }
         "Android" {
-            Invoke-Checked -Command "flutter" -Arguments @("build", "apk", "--release") -Description "Сборка Android APK"
+            Invoke-Checked -Command "flutter" -Arguments @("build", "apk", "--release") -Description "Building Android APK"
             $Apk = Join-Path $ProjectRoot "build\app\outputs\flutter-apk\app-release.apk"
             if (-not (Test-Path $Apk)) {
-                throw "APK не найден: $Apk. Проверь Android SDK и принятые Android SDK licenses."
+                throw "APK was not found: $Apk. Check the Android SDK and accepted Android SDK licenses."
             }
             Copy-Item $Apk (Join-Path $ReleaseRoot "flutterdraw-android.apk")
         }
         "Web" {
-            Invoke-Checked -Command "flutter" -Arguments @("build", "web", "--release") -Description "Сборка Web"
+            Invoke-Checked -Command "flutter" -Arguments @("build", "web", "--release") -Description "Building Web"
             $WebFolder = Join-Path $ProjectRoot "build\web"
             if (-not (Test-Path (Join-Path $WebFolder "index.html"))) {
-                throw "Web-сборка не найдена: $WebFolder."
+                throw "Web build was not found: $WebFolder."
             }
             $Archive = Join-Path $ReleaseRoot "flutterdraw-web.zip"
             Compress-Archive -Path (Join-Path $WebFolder "*") -DestinationPath $Archive -CompressionLevel Optimal
@@ -116,6 +116,6 @@ $BuildInfo = @(
 )
 $BuildInfo | Set-Content -Path (Join-Path $ReleaseRoot "BUILD-INFO.txt") -Encoding UTF8
 
-Write-Host "`nСборка завершена." -ForegroundColor Green
-Write-Host "Результаты: $ReleaseRoot" -ForegroundColor Green
+Write-Host "`nBuild completed." -ForegroundColor Green
+Write-Host "Output: $ReleaseRoot" -ForegroundColor Green
 Get-ChildItem $ReleaseRoot | Select-Object Name, Length
