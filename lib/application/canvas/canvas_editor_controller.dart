@@ -182,14 +182,14 @@ class CanvasEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, StrokeAlignment? strokeAlignment, double? strokeOpacity, double? fillOpacity, String? fontFamily, String? textAlign}) {
+  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, StrokeAlignment? strokeAlignment, double? opacity, double? strokeOpacity, double? fillOpacity, String? fontFamily, String? textAlign}) {
     final selected = selectedElements;
     if (selected.isEmpty) return;
     final before = _document;
     for (final element in selected) {
       _document = _document.replaceElement(element.copyWith(
         strokeColor: strokeColor, fillColor: fillColor, strokeWidth: strokeWidth,
-        strokeAlignment: strokeAlignment, strokeOpacity: strokeOpacity, fillOpacity: fillOpacity,
+        strokeAlignment: strokeAlignment, opacity: opacity, strokeOpacity: strokeOpacity, fillOpacity: fillOpacity,
         fontFamily: fontFamily, textAlign: textAlign,
       ));
     }
@@ -198,6 +198,7 @@ class CanvasEditorController extends ChangeNotifier {
       if (fillColor != null) 'fillColor',
       if (strokeWidth != null) 'strokeWidth',
       if (strokeAlignment != null) 'strokeAlignment',
+      if (opacity != null) 'opacity',
       if (strokeOpacity != null) 'strokeOpacity',
       if (fillOpacity != null) 'fillOpacity',
       if (fontFamily != null) 'fontFamily',
