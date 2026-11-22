@@ -934,6 +934,20 @@ class _InspectorPanel extends StatelessWidget {
                 Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 14),
                 if (element.type == DrawingElementType.image) ...[
+                  _section(context, 'Размер изображения'),
+                  _dimensionField(context, 'Ширина', element.width,
+                    (value) => controller.setSelectedImageSize(width: value)),
+                  const SizedBox(height: 8),
+                  _dimensionField(context, 'Высота', element.height,
+                    (value) => controller.setSelectedImageSize(height: value)),
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Сохранять пропорции'),
+                    value: controller.lockImageAspectRatio,
+                    onChanged: controller.setImageAspectRatioLocked,
+                  ),
+                  const SizedBox(height: 8),
                   _section(context, 'Непрозрачность изображения: ${(element.fillOpacity * 100).round()}%'),
                   Slider(
                     min: 0,
