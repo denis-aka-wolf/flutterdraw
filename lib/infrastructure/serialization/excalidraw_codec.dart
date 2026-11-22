@@ -102,7 +102,7 @@ class ExcalidrawCodec {
       fillColor: _parseColor(raw['backgroundColor'], 0x00000000),
       strokeWidth: _number(raw['strokeWidth'], 2),
       roughness: _number(raw['roughness'], 1),
-      opacity: (_number(raw['opacity'], 100) / 100).clamp(0.0, 1.0),
+      opacity: (_number(raw['opacity'], 100) / 100).clamp(0.0, 1.0).toDouble(),
       text: raw['text'] is String ? raw['text']! as String : '',
       fontSize: _number(raw['fontSize'], 24),
       fontFamily: _fontFamily(raw['fontFamily']),
@@ -150,7 +150,7 @@ class ExcalidrawCodec {
       final oldGroups = original['groupIds'];
       result['groupIds'] = oldGroups is List && oldGroups.isNotEmpty ? oldGroups : [groupId];
     } else {
-      result['groupIds'] = original['groupIds'] ?? <String>[];
+      result['groupIds'] = <String>[];
     }
     return result;
   }
