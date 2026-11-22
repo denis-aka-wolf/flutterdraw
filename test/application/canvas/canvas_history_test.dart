@@ -9,6 +9,7 @@ void main() {
   group('Canvas document history', () {
     test('undoes and redoes a completed drawing gesture as one action', () {
       final controller = CanvasEditorController()
+        ..setSnapToGrid(false)
         ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(10, 10));
       controller.pointerMove(const Point2(100, 80));
