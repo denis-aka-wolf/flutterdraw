@@ -10,6 +10,7 @@ dist/
 pubspec.lock
 analysis_options.yaml
 /web/
+/android/
 
 # IDE
 .idea/
