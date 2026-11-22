@@ -557,12 +557,24 @@ class CanvasEditorController extends ChangeNotifier {
           _resizeElement(_gestureOriginals.single, handle, worldPosition);
         }
       } else if (_isMoving && _gestureOriginals.isNotEmpty) {
-        final delta = _snappedMoveDelta(worldPosition.x - _gestureStart!.x,
-            worldPosition.y - _gestureStart!.y);
-        for (final original in _gestureOriginals) {
-          _document = _document.replaceElement(delta.x == 0 && delta.y == 0
-              ? original
-              : original.translated(delta.x, delta.y));
+        final hasMoved = worldPosition.x != _gestureStart!.x ||
+            worldPosition.y != _gestureStart!.y;
+        if (hasMoved) {
+          final delta = _snappedMoveDelta(
+            worldPosition.x - _gestureStart!.x,
+            worldPosition.y - _gestureStart!.y,
+          );
+          for (final original in _gestureOriginals) {
+            _document = _document.replaceElement(
+              delta.x == 0 && delta.y == 0
+                  ? original
+                  : original.translated(delta.x, delta.y),
+            );
+          }
+        } else {
+          for (final original in _gestureOriginals) {
+            _document = _document.replaceElement(original);
+          }
         }
       }
       _clearGesture();
