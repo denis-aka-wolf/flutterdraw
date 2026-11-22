@@ -20,6 +20,7 @@ void main() {
           seed: 12345,
           strokeColor: 0xFF123456,
           strokeWidth: 3.5,
+          strokeAlignment: StrokeAlignment.outside,
           roughness: 0.75,
         ),
         DrawingElement(
@@ -42,6 +43,7 @@ void main() {
       expect(restored.elements[0].x, 12.5);
       expect(restored.elements[0].width, 140);
       expect(restored.elements[0].strokeColor, 0xFF123456);
+      expect(restored.elements[0].strokeAlignment, StrokeAlignment.outside);
       expect(restored.elements[0].roughness, 0.75);
       expect(restored.elements[1].points, const [
         Point2(0, 0),
