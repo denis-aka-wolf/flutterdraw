@@ -26,6 +26,7 @@ void main() {
 
     test('groups moving a selected element into one history entry', () {
       final controller = CanvasEditorController()
+        ..setSnapToGrid(false)
         ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(10, 10));
       controller.pointerUp(const Point2(100, 80));
