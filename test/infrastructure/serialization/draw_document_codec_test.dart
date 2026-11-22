@@ -63,7 +63,8 @@ void main() {
           textAlign: 'center',
           strokeColor: 0xFF2563EB,
           fillColor: 0xFF16A34A,
-          opacity: 0.4,
+          strokeOpacity: 0.4,
+          fillOpacity: 0.65,
         ),
       ]);
 
@@ -72,7 +73,8 @@ void main() {
       expect(restored.textAlign, 'center');
       expect(restored.fontSize, 32);
       expect(restored.fillColor, 0xFF16A34A);
-      expect(restored.opacity, 0.4);
+      expect(restored.strokeOpacity, 0.4);
+      expect(restored.fillOpacity, 0.65);
     });
 
     test('preserves unknown document and element fields', () {
