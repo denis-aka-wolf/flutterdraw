@@ -232,6 +232,43 @@ class CanvasEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _lockImageAspectRatio = true;
+
+  bool get lockImageAspectRatio => _lockImageAspectRatio;
+
+  void setImageAspectRatioLocked(bool value) {
+    if (_lockImageAspectRatio == value) return;
+    _lockImageAspectRatio = value;
+    notifyListeners();
+  }
+
+  void setSelectedImageSize({double? width, double? height}) {
+    final selected = selectedElements;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.image) return;
+    final before = _document;
+    final element = selected.single;
+    final originalWidth = element.width.abs().clamp(0.001, double.infinity);
+    final originalHeight = element.height.abs().clamp(0.001, double.infinity);
+    final ratio = originalWidth / originalHeight;
+    var nextWidth = width ?? element.width;
+    var nextHeight = height ?? element.height;
+    if (_lockImageAspectRatio) {
+      if (width != null) {
+        nextHeight = nextWidth / ratio;
+      } else if (height != null) {
+        nextWidth = nextHeight * ratio;
+      }
+    }
+    nextWidth = nextWidth.clamp(1.0, 10000.0).toDouble();
+    nextHeight = nextHeight.clamp(1.0, 10000.0).toDouble();
+    _document = _document.replaceElement(element.copyWith(
+      width: nextWidth,
+      height: nextHeight,
+    ));
+    _recordHistory(before, mergeKey: 'image-size');
+    notifyListeners();
+  }
+
   void setSelectedTextBlockSize({double? width, double? height}) {
     final selected = selectedElements;
     if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
