@@ -27,11 +27,12 @@ The inspector changes according to the selected element. Text can also be edited
 Use the **Файл** menu in the top bar or the keyboard shortcuts below.
 
 - **New:** starts an empty document.
-- **Open:** opens a previously saved `.flutterdraw` document.
+- **Open:** opens a `.flutterdraw` document or an Excalidraw `.excalidraw` / JSON file.
 - **Save:** writes changes to the currently opened/saved file. If the document has no file path yet, Save opens the save dialog.
 - **Save as:** opens the platform save dialog and saves a separate `.flutterdraw` file.
 - **Export PNG:** renders the complete document bounds to a transparent PNG at 2× resolution, regardless of the current viewport.
 - **Export SVG:** writes the document's vector geometry and text as an SVG file.
+- **Export Excalidraw:** exports supported FlutterDraw elements to Excalidraw JSON.
 
 When creating a new document or opening another one, FlutterDraw asks for confirmation if the current document has unsaved changes.
 
@@ -81,7 +82,7 @@ On macOS, use Command where the shortcut is written as Ctrl/Cmd.
 
 ## Current format and compatibility
 
-The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. It is distinct from the Excalidraw `.excalidraw` format. Excalidraw import/export is planned and is not currently available in the user interface.
+The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can also be imported and exported. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
 
 ## Known limitations
 
