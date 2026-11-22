@@ -151,8 +151,9 @@ class ExcalidrawCodec {
     final groupId =
         groupIds is List && groupIds.isNotEmpty ? groupIds.first : null;
     final extra = <String, Object?>{_originalKey: raw};
-    if (groupId is String && groupId.isNotEmpty)
+    if (groupId is String && groupId.isNotEmpty) {
       extra['flutterdrawGroupId'] = groupId;
+    }
     return DrawingElement(
       id: raw['id'] is String ? raw['id']! as String : 'excalidraw-$index',
       type: type,
