@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterdraw/core/geometry/viewport_transform.dart';
 import 'package:flutterdraw/domain/document/draw_document.dart';
+import 'package:flutterdraw/domain/document/document_asset.dart';
 import 'package:flutterdraw/domain/elements/drawing_element.dart';
 import 'package:flutterdraw/infrastructure/serialization/draw_document_codec.dart';
 
@@ -75,6 +76,29 @@ void main() {
       expect(restored.fillColor, 0xFF16A34A);
       expect(restored.strokeOpacity, 0.4);
       expect(restored.fillOpacity, 0.65);
+    });
+
+    test('round-trips embedded assets and unknown asset metadata', () {
+      final document = DrawDocument(
+        assets: {
+          'image-1': DocumentAsset(
+            id: 'image-1',
+            mimeType: 'image/png',
+            name: 'diagram.png',
+            bytes: [0, 1, 2, 255],
+            extraData: const {'futureAssetField': 'preserved'},
+          ),
+        },
+      );
+
+      final restored = codec.decode(codec.encode(document));
+      final asset = restored.assets['image-1']!;
+
+      expect(asset.id, 'image-1');
+      expect(asset.mimeType, 'image/png');
+      expect(asset.name, 'diagram.png');
+      expect(asset.bytes, [0, 1, 2, 255]);
+      expect(asset.extraData['futureAssetField'], 'preserved');
     });
 
     test('preserves unknown document and element fields', () {
