@@ -1122,8 +1122,9 @@ class _InspectorPanel extends StatelessWidget {
                           child: Text('Times New Roman')),
                     ],
                     onChanged: (value) {
-                      if (value != null)
+                      if (value != null) {
                         controller.updateSelectedProperties(fontFamily: value);
+                      }
                     },
                   ),
                   const SizedBox(height: 12),
