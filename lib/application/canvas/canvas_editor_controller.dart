@@ -866,7 +866,11 @@ class CanvasEditorController extends ChangeNotifier {
       final width = (originalWidth * scale).clamp(minimumSize, 10000.0);
       final height = (width / aspectRatio).clamp(minimumSize, 10000.0);
 
-      if (handle == ResizeHandle.middleLeft ||
+      if (isVerticalEdge) {
+        final centerX = (original.left + original.right) / 2;
+        left = centerX - width / 2;
+        right = centerX + width / 2;
+      } else if (handle == ResizeHandle.middleLeft ||
           handle == ResizeHandle.topLeft ||
           handle == ResizeHandle.bottomLeft) {
         left = original.right - width;
@@ -877,8 +881,9 @@ class CanvasEditorController extends ChangeNotifier {
       }
 
       if (isHorizontalEdge) {
-        top = original.centerY - height / 2;
-        bottom = original.centerY + height / 2;
+        final centerY = (original.top + original.bottom) / 2;
+        top = centerY - height / 2;
+        bottom = centerY + height / 2;
       } else if (handle == ResizeHandle.topLeft ||
           handle == ResizeHandle.topCenter ||
           handle == ResizeHandle.topRight) {
