@@ -84,7 +84,7 @@ Rendering stages:
 3. Flutter Canvas paint backend.
 4. Optional caches keyed by element revision and render scale.
 
-Use a separate sketch renderer. Rough.js is a behavioral reference for rough geometric strokes; perfect-freehand is a reference for pressure-aware freehand outlines. Review exact upstream and dependency licenses before porting code. Prefer a Dart-native implementation.
+Use a separate sketch renderer. The current renderer provides deterministic seeded rough geometry for supported shapes and strokes. Pressure-aware freehand outlines remain future work. Rough.js is a behavioral reference for rough geometric strokes; perfect-freehand is a reference for pressure-aware freehand outlines. Review exact upstream and dependency licenses before porting code. Prefer a Dart-native implementation.
 
 ## Interaction
 
@@ -107,12 +107,12 @@ Do not use Excalidraw JSON as the internal domain model. Implement a dedicated c
 - appState
 - files
 
-Compatibility milestones:
-1. Import/export common shapes, lines, arrows, text, and styles.
-2. Preserve unknown fields and unsupported elements.
-3. Support image data and file references.
-4. Handle groups, bindings, frames, text metrics, and edge cases.
-5. Maintain fixture-based round-trip tests against real Excalidraw files.
+Compatibility status and remaining milestones:
+1. [x] Import/export common shapes, lines, arrows, freehand strokes, text, styles and basic group membership.
+2. [x] Preserve unknown root metadata and unsupported element records where possible.
+3. [ ] Support rendering and editing image data and file references.
+4. [ ] Improve handling of bindings, frames, text metrics and less common element variants.
+5. [x] Maintain codec tests for supported mappings and preservation behavior; expand the suite with real-world fixture files.
 
 An element that cannot yet be rendered must not be silently discarded during import/export.
 
@@ -158,11 +158,14 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 - [x] Reorderable layers panel, grid snapping and smart alignment guides.
 
 ### M4: Sketch renderer
-- Rough geometric strokes and pressure-aware freehand.
-- Deterministic seeds and visual regression tests.
+- [x] Rough geometric strokes with deterministic seeds.
+- [ ] Pressure-aware freehand outlines.
+- [ ] Expand visual regression tests.
 
 ### M5: Desktop release
-- Menus, shortcuts, native dialogs, packaging and smoke tests.
+- [x] File menu, core keyboard shortcuts and native file dialogs.
+- [x] Local Windows/Android/Web release packaging script.
+- [ ] Release smoke tests and platform-specific polish.
 
 ### M6: Web and mobile
 - Browser persistence/downloads, touch/stylus, adaptive layout.
