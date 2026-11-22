@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../core/geometry/viewport_transform.dart';
 import '../../domain/document/draw_document.dart';
+import '../../domain/document/document_asset.dart';
 import '../../domain/elements/drawing_element.dart';
 
 /// Excalidraw JSON codec. Unknown fields and unsupported elements are retained.
@@ -30,12 +31,42 @@ class ExcalidrawCodec {
       final element = _decodeElement(raw, i);
       if (element == null) { unsupported.add(raw); } else { elements.add(element); }
     }
+    final assets = <String, DocumentAsset>{};
+    final rawFiles = decoded['files'];
+    if (rawFiles is Map) {
+      for (final entry in rawFiles.entries) {
+        if (entry.key is! String || entry.value is! Map) continue;
+        final file = Map<String, Object?>.from(entry.value as Map);
+        final dataUrl = file['dataURL'];
+        if (dataUrl is! String || !dataUrl.startsWith('data:')) continue;
+        final separator = dataUrl.indexOf(',');
+        if (separator < 0) continue;
+        final header = dataUrl.substring(5, separator);
+        if (!header.endsWith(';base64')) continue;
+        final mimeType = header.substring(0, header.length - 7);
+        try {
+          assets[entry.key as String] = DocumentAsset(
+            id: entry.key as String,
+            mimeType: mimeType,
+            bytes: base64Decode(dataUrl.substring(separator + 1)),
+            name: file['name'] is String ? file['name'] as String : null,
+            extraData: {
+              for (final field in file.entries)
+                if (!const {'id', 'mimeType', 'dataURL', 'name'}.contains(field.key))
+                  field.key: field.value,
+            },
+          );
+        } on FormatException {
+          // Keep malformed/unsupported file records in original metadata.
+        }
+      }
+    }
     final metadata = <String, Object?>{
       for (final entry in decoded.entries)
         if (!const {'type', 'version', 'elements'}.contains(entry.key))
           entry.key: entry.value,
     };
-    return DrawDocument(elements: elements, extraData: {
+    return DrawDocument(elements: elements, assets: assets, extraData: {
       _metadataKey: metadata,
       if (unsupported.isNotEmpty) _unsupportedKey: unsupported,
     });
@@ -57,7 +88,18 @@ class ExcalidrawCodec {
       'source': metadata['source'] ?? 'https://github.com/denis-aka-wolf/flutterdraw',
       'elements': elements,
       'appState': metadata['appState'] ?? {'viewBackgroundColor': '#ffffff'},
-      'files': metadata['files'] ?? <String, Object?>{},
+      'files': {
+        if (metadata['files'] is Map)
+          ...Map<String, Object?>.from(metadata['files'] as Map),
+        for (final asset in document.assets.values)
+          asset.id: {
+            ...asset.extraData,
+            'id': asset.id,
+            'mimeType': asset.mimeType,
+            if (asset.name != null) 'name': asset.name,
+            'dataURL': 'data:${asset.mimeType};base64,${base64Encode(asset.bytes)}',
+          },
+      },
     };
     return pretty ? const JsonEncoder.withIndent('  ').convert(result) : jsonEncode(result);
   }
