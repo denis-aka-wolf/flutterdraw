@@ -28,7 +28,10 @@ Use the **Файл** menu in the top bar or the keyboard shortcuts below.
 
 - **New:** starts an empty document.
 - **Open:** opens a previously saved `.flutterdraw` document.
-- **Save:** opens the platform save dialog and writes the current document in FlutterDraw's native JSON format.
+- **Save:** writes changes to the currently opened/saved file. If the document has no file path yet, Save opens the save dialog.
+- **Save as:** opens the platform save dialog and saves a separate `.flutterdraw` file.
+- **Export PNG:** renders the complete document bounds to a transparent PNG at 2× resolution, regardless of the current viewport.
+- **Export SVG:** writes the document's vector geometry and text as an SVG file.
 
 When creating a new document or opening another one, FlutterDraw asks for confirmation if the current document has unsaved changes.
 
@@ -54,7 +57,8 @@ The **Слои** panel is docked below the inspector on the right. It lists topm
 | --- | --- |
 | Ctrl/Cmd + N | New document |
 | Ctrl/Cmd + O | Open a `.flutterdraw` document |
-| Ctrl/Cmd + S | Save document |
+| Ctrl/Cmd + S | Save document (or open Save As for a new document) |
+| Ctrl/Cmd + Shift + S | Save document as… |
 | Ctrl/Cmd + G | Group selected elements |
 | Ctrl/Cmd + Shift + G | Ungroup selected elements |
 | Right-click | Open the context menu |
@@ -81,6 +85,6 @@ The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own c
 
 ## Known limitations
 
-- Image elements and PNG/SVG export are not available yet.
+- Image elements are not available yet. SVG export uses clean vector geometry and does not reproduce the editor's seeded sketch jitter exactly.
 - Autosave recovery is local to the application installation/profile. It is not cloud synchronization.
 - The current file workflow should be treated as an early implementation; keep backups of important documents.
