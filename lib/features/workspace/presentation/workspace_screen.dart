@@ -590,8 +590,11 @@ class _WorkspaceHeader extends StatelessWidget {
               BorderSide(color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
-      child: Row(
-        children: [
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           Icon(Icons.gesture_rounded, color: colors.primary),
           const SizedBox(width: 10),
           Text(
@@ -601,10 +604,13 @@ class _WorkspaceHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(width: 24),
-          Flexible(child: Text(title, overflow: TextOverflow.ellipsis)),
+          SizedBox(
+            width: 140,
+            child: Text(title, overflow: TextOverflow.ellipsis),
+          ),
           const SizedBox(width: 12),
           Text(saveStatus, style: Theme.of(context).textTheme.labelSmall),
-          const Spacer(),
+          const SizedBox(width: 12),
           PopupMenuButton<String>(
             tooltip: 'Файл',
             onSelected: (value) {
@@ -766,7 +772,8 @@ class _WorkspaceHeader extends StatelessWidget {
             icon: const Icon(Icons.save_outlined, size: 18),
             label: const Text('Сохранить'),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -793,8 +800,10 @@ class _ToolRail extends StatelessWidget {
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
-          return Column(
-            children: [
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               _ToolButton(
                 controller: controller,
                 tool: CanvasTool.select,
@@ -859,7 +868,8 @@ class _ToolRail extends StatelessWidget {
                 onPressed: onImportImage,
                 icon: const Icon(Icons.add_photo_alternate_outlined),
               ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -933,9 +943,6 @@ class _InspectorPanel extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Свойства',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 12),
                 Text('Выберите один или несколько объектов на холсте.',
                     style: Theme.of(context).textTheme.bodySmall),
               ],
@@ -952,9 +959,6 @@ class _InspectorPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Свойства',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 14),
                 if (element.type == DrawingElementType.image) ...[
                   _section(context, 'Размер изображения'),
                   _dimensionField(context, 'Ширина', element.width,
