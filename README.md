@@ -58,8 +58,9 @@ Image elements are not yet implemented.
 | Ctrl/Cmd + Z | Undo |
 | Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y | Redo |
 | Ctrl/Cmd + N | New document |
+| Ctrl/Cmd + Shift + S | Save document as… |
 | Ctrl/Cmd + O | Open a `.flutterdraw` or Excalidraw document |
-| Ctrl/Cmd + S | Save the current document |
+| Ctrl/Cmd + S | Save the current document (or open Save As for a new/imported document) |
 | Ctrl/Cmd + G | Group selected elements |
 | Ctrl/Cmd + Shift + G | Ungroup selected elements |
 | Right-click | Open the canvas context menu |
@@ -94,9 +95,11 @@ GitHub Actions is not required. With Flutter, Visual Studio C++ build tools and 
 
 The script runs analysis and tests, then creates Windows, Android APK and Web packages in dist/vX.Y.Z. See [the release build guide](docs/BUILDING_RELEASES.md) for requirements and manual GitHub Releases publishing.
 
-## Excalidraw compatibility
+## File formats and export
 
-The compatibility layer will preserve the Excalidraw document envelope (type, version, source, elements, appState, files) and round-trip fields that FlutterDraw does not yet understand wherever possible. Compatibility will be tested against real fixture files.
+The native `.flutterdraw` format is FlutterDraw's editable document format. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. The codec maps common shapes, lines, arrows, freehand strokes, text and group membership. Unknown metadata and unsupported element records are retained where possible, but unsupported elements such as images are not rendered or editable yet.
+
+PNG export renders the document bounds at 2× resolution. SVG export writes vector geometry and text; it does not reproduce the seeded sketch jitter pixel-for-pixel. Export commands are available from the **Файл** menu.
 
 ## License
 
