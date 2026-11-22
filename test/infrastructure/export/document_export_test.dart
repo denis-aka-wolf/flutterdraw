@@ -52,7 +52,7 @@ void main() {
           id: 'rect', type: DrawingElementType.rectangle,
           x: 10, y: 20, width: 100, height: 60, seed: 7,
           strokeColor: 0xFF123456, fillColor: 0xFFABCDEF,
-          strokeWidth: 3, opacity: 0.5,
+          strokeWidth: 3, strokeOpacity: 0.25, fillOpacity: 0.75,
         ),
         DrawingElement(
           id: 'text', type: DrawingElementType.text,
@@ -67,6 +67,8 @@ void main() {
       expect(svg, contains('<rect'));
       expect(svg, contains('fill="#abcdef"'));
       expect(svg, contains('stroke="#123456"'));
+      expect(svg, contains('fill-opacity="0.75"'));
+      expect(svg, contains('stroke-opacity="0.25"'));
       expect(svg, contains('A &lt; B &amp; C'));
       expect(svg, contains('font-family="Georgia"'));
       expect(svg, endsWith('</svg>'));
