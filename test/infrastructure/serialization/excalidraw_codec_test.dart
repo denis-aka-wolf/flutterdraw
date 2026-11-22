@@ -133,6 +133,41 @@ void main() {
       expect(exported['files']['asset-native']['dataURL'], 'data:image/jpeg;base64,BAUG');
     });
 
+    test('round-trips an image element and its embedded file', () {
+      final document = DrawDocument(
+        elements: [
+          DrawingElement(
+            id: 'image-1',
+            type: DrawingElementType.image,
+            x: 10,
+            y: 20,
+            width: 300,
+            height: 200,
+            seed: 7,
+            assetId: 'asset-1',
+          ),
+        ],
+        assets: {
+          'asset-1': DocumentAsset(
+            id: 'asset-1',
+            mimeType: 'image/png',
+            bytes: [0, 1, 2, 255],
+          ),
+        },
+      );
+
+      final encoded = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
+      final element = (encoded['elements'] as List).single as Map<String, dynamic>;
+      expect(element['type'], 'image');
+      expect(element['fileId'], 'asset-1');
+      expect(encoded['files']['asset-1']['dataURL'], 'data:image/png;base64,AAEC/w==');
+
+      final restored = codec.decode(jsonEncode(encoded));
+      expect(restored.elements.single.type, DrawingElementType.image);
+      expect(restored.elements.single.assetId, 'asset-1');
+      expect(restored.assets['asset-1']!.bytes, [0, 1, 2, 255]);
+    });
+
     test('rejects another JSON format', () {
       expect(() => codec.decode('{"type":"other","elements":[]}'), throwsFormatException);
     });
