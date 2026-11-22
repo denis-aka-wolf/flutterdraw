@@ -315,8 +315,9 @@ class CanvasEditorController extends ChangeNotifier {
 
   void setSelectedTextBlockSize({double? width, double? height}) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) {
       return;
+    }
     final before = _document;
     final element = selected.single;
     _document = _document.replaceElement(element.copyWith(
