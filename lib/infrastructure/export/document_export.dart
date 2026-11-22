@@ -47,8 +47,25 @@ class DocumentExport {
     final canvas = Canvas(recorder);
     canvas.scale(pixelRatio);
     canvas.translate(-area.left, -area.top);
-    for (final element in document.elements) {
-      _paintElement(canvas, element);
+    final decodedAssets = <String, ui.Image>{};
+    try {
+      for (final asset in document.assets.values) {
+        final codec = await ui.instantiateImageCodec(Uint8List.fromList(asset.bytes));
+        final frame = await codec.getNextFrame();
+        decodedAssets[asset.id] = frame.image;
+        codec.dispose();
+      }
+      for (final element in document.elements) {
+        _paintElement(
+          canvas,
+          element,
+          image: element.assetId == null ? null : decodedAssets[element.assetId],
+        );
+      }
+    } finally {
+      for (final image in decodedAssets.values) {
+        image.dispose();
+      }
     }
     final picture = recorder.endRecording();
     final image = await picture.toImage(width, height);
@@ -94,6 +111,12 @@ class DocumentExport {
               out.write('<path d="M $ax $ay L ${b.x} ${b.y} L $bx $by" fill="none" $common/>');
             }
           }
+        case DrawingElementType.image:
+          final asset = e.assetId == null ? null : document.assets[e.assetId];
+          if (asset != null) {
+            final data = base64Encode(asset.bytes);
+            out.write('<image href="data:${asset.mimeType};base64,$data" x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" opacity="${e.fillOpacity}"/>');
+          }
         case DrawingElementType.text:
           final lines = e.text.split('\n');
           final anchor = e.textAlign == 'center' ? 'middle' : e.textAlign == 'right' ? 'end' : 'start';
@@ -109,7 +132,18 @@ class DocumentExport {
     return out.toString();
   }
 
-  static void _paintElement(Canvas canvas, DrawingElement e) {
+  static void _paintElement(Canvas canvas, DrawingElement e, {ui.Image? image}) {
+    if (e.type == DrawingElementType.image) {
+      if (image != null) {
+        canvas.drawImageRect(
+          image,
+          Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+          Rect.fromLTWH(e.x, e.y, e.width, e.height),
+          Paint()..color = Color(0xFFFFFFFF).withValues(alpha: e.fillOpacity),
+        );
+      }
+      return;
+    }
     final stroke = Paint()
       ..color = Color(e.strokeColor).withValues(alpha: e.strokeOpacity)
       ..style = PaintingStyle.stroke
