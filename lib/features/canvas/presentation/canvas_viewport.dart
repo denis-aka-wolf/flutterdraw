@@ -543,7 +543,7 @@ class _CanvasPainter extends CustomPainter {
         text: TextSpan(
           text: element.text,
           style: TextStyle(
-            color: Color(element.strokeColor).withValues(alpha: element.opacity * opacity),
+            color: Color(element.strokeColor).withValues(alpha: element.strokeOpacity * opacity),
             fontSize: element.fontSize,
             fontFamily: element.fontFamily,
             height: 1.2,
