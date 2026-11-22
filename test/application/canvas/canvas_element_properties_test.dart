@@ -39,14 +39,16 @@ void main() {
         strokeColor: 0xFFDC2626,
         fillColor: 0xFF16A34A,
         strokeWidth: 5,
-        opacity: 0.7,
+        strokeOpacity: 0.35,
+        fillOpacity: 0.7,
       );
 
       final shape = controller.selectedElements.single;
       expect(shape.strokeColor, 0xFFDC2626);
       expect(shape.fillColor, 0xFF16A34A);
       expect(shape.strokeWidth, 5);
-      expect(shape.opacity, 0.7);
+      expect(shape.strokeOpacity, 0.35);
+      expect(shape.fillOpacity, 0.7);
       controller.dispose();
     });
   });
