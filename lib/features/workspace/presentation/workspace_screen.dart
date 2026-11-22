@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../infrastructure/serialization/draw_document_codec.dart';
 import '../../../infrastructure/export/document_export.dart';
+import '../../../infrastructure/serialization/excalidraw_codec.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
@@ -30,6 +31,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   late final CanvasEditorController _controller;
   static const _autosaveKey = 'flutterdraw_autosave_v1';
   final _codec = const DrawDocumentCodec();
+  final _excalidrawCodec = const ExcalidrawCodec();
   Timer? _autosaveTimer;
   String _documentTitle = 'Без названия';
   String? _documentPath;
@@ -193,7 +195,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['flutterdraw'],
+        allowedExtensions: ['flutterdraw', 'excalidraw', 'json'],
         withData: true,
       );
       if (result == null || result.files.isEmpty) {
@@ -204,7 +206,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       if (bytes == null) {
         throw const FormatException('Не удалось прочитать содержимое файла.');
       }
-      final document = _codec.decode(utf8.decode(bytes));
+      final source = utf8.decode(bytes);
+      final decoded = jsonDecode(source);
+      final document = decoded is Map && decoded['type'] == 'excalidraw'
+          ? _excalidrawCodec.decode(source)
+          : _codec.decode(source);
       _controller.loadDocument(document);
       _documentPath = kIsWeb ? null : file.path;
       _savedContent = _codec.encode(document, pretty: false);
@@ -310,6 +316,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
+  Future<void> _exportExcalidraw() async {
+    try {
+      final bytes = Uint8List.fromList(utf8.encode(_excalidrawCodec.encode(_controller.document)));
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Экспортировать в Excalidraw',
+        fileName: 'FlutterDraw.excalidraw',
+        type: FileType.custom,
+        allowedExtensions: ['excalidraw'],
+        bytes: bytes,
+      );
+      if (path != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Excalidraw экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось экспортировать Excalidraw: $error')),
+      );
+    }
+  }
+
   Future<void> _saveDocumentAs() async {
     if (_isSaving) return;
     setState(() {
@@ -380,6 +408,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onSaveAs: _saveDocumentAs,
               onExportPng: _exportPng,
               onExportSvg: _exportSvg,
+              onExportExcalidraw: _exportExcalidraw,
               saveStatus: _saveStatus,
             ),
             Expanded(
@@ -431,6 +460,7 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onSaveAs,
     required this.onExportPng,
     required this.onExportSvg,
+    required this.onExportExcalidraw,
     required this.saveStatus,
   });
 
@@ -442,6 +472,7 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onSaveAs;
   final VoidCallback onExportPng;
   final VoidCallback onExportSvg;
+  final VoidCallback onExportExcalidraw;
   final String saveStatus;
 
   @override
@@ -493,6 +524,9 @@ class _WorkspaceHeader extends StatelessWidget {
                   break;
                 case 'exportSvg':
                   onExportSvg();
+                  break;
+                case 'exportExcalidraw':
+                  onExportExcalidraw();
                   break;
               }
             },
@@ -549,6 +583,14 @@ class _WorkspaceHeader extends StatelessWidget {
                   dense: true,
                   leading: Icon(Icons.code),
                   title: Text('Экспорт SVG…'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'exportExcalidraw',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.import_export),
+                  title: Text('Экспорт Excalidraw…'),
                 ),
               ),
             ],
