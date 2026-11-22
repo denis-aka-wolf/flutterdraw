@@ -217,7 +217,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _savedContent = _codec.encode(document, pretty: false);
       setState(() {
         _documentTitle = isExcalidraw
-            ? file.name.replaceFirst(RegExp(r'\.(excalidraw|json)
+            ? file.name.replaceFirst(
+                RegExp(r'\.(excalidraw|json)$', caseSensitive: false),
+                '',
+              )
+            : file.name;
         _saveStatus = 'Сохранено';
       });
       _lastAutosavedContent = null;
