@@ -118,7 +118,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _lastAutosavedTitle = _documentTitle;
       _savedContent = null;
       if (mounted) setState(() => _saveStatus = 'Восстановлено');
-    } on Object {
+    } catch (_) {
       // A damaged recovery snapshot must not prevent the editor from opening.
     } finally {
       _restoringSession = false;
@@ -227,7 +227,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       _onDocumentChanged();
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) {
       return;
     }
@@ -263,7 +263,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
@@ -293,7 +293,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           SnackBar(content: Text('PNG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать PNG: $error')),
       );
@@ -315,7 +315,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           SnackBar(content: Text('SVG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать SVG: $error')),
       );
@@ -337,7 +337,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           SnackBar(content: Text('Excalidraw экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать Excalidraw: $error')),
       );
@@ -382,7 +382,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
@@ -1126,7 +1126,7 @@ class _StatusBar extends StatelessWidget {
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       _onDocumentChanged();
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) {
       return;
     }
@@ -1162,7 +1162,7 @@ class _StatusBar extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
@@ -1192,7 +1192,7 @@ class _StatusBar extends StatelessWidget {
           SnackBar(content: Text('PNG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать PNG: $error')),
       );
@@ -1214,7 +1214,7 @@ class _StatusBar extends StatelessWidget {
           SnackBar(content: Text('SVG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать SVG: $error')),
       );
@@ -1236,7 +1236,7 @@ class _StatusBar extends StatelessWidget {
           SnackBar(content: Text('Excalidraw экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
         );
       }
-    } on Object catch (error) {
+    } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось экспортировать Excalidraw: $error')),
       );
@@ -1281,7 +1281,7 @@ class _StatusBar extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
-    } on Object catch (error) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
