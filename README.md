@@ -26,7 +26,7 @@ FlutterDraw is under active development. The current application includes:
 - Rectangle, ellipse, diamond, line, arrow and freehand drawing tools.
 - Text elements with inline editing, font, size, alignment and color controls.
 - Selection, marquee multi-selection, move, resize, copy, paste and duplicate.
-- Element opacity, stroke/fill styling and z-order controls.
+- Independent stroke and fill opacity, stroke/fill styling and z-order controls.
 - Right-click context menu, grouping/ungrouping and six alignment operations.
 - Grid snapping, smart alignment guides and a reorderable layers panel.
 - Undo/redo history with gesture grouping.
