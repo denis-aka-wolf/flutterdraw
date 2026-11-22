@@ -75,6 +75,7 @@ void main() {
           x: 10, y: 20, width: 40, height: 30, seed: 5,
           points: const [Point2(10, 20), Point2(50, 50)],
           strokeColor: 0xFF2563EB,
+          strokeAlignment: StrokeAlignment.inside,
         ),
       ]);
       final json = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
@@ -83,6 +84,7 @@ void main() {
       expect(element['type'], 'arrow');
       expect(element['points'], [[0, 0], [40, 30]]);
       expect(element['strokeColor'], '#2563eb');
+      expect(element['flutterdrawStrokeAlignment'], 'inside');
     });
 
     test('rejects another JSON format', () {
