@@ -101,6 +101,10 @@ class ExcalidrawCodec {
       strokeColor: _parseColor(raw['strokeColor'], 0xFF252525),
       fillColor: _parseColor(raw['backgroundColor'], 0x00000000),
       strokeWidth: _number(raw['strokeWidth'], 2),
+      strokeAlignment: StrokeAlignment.values.firstWhere(
+        (value) => value.name == raw['flutterdrawStrokeAlignment'],
+        orElse: () => StrokeAlignment.center,
+      ),
       roughness: _number(raw['roughness'], 1),
       opacity: (_number(raw['opacity'], 100) / 100).clamp(0.0, 1.0).toDouble(),
       text: raw['text'] is String ? raw['text']! as String : '',
@@ -126,6 +130,7 @@ class ExcalidrawCodec {
       'backgroundColor': element.fillColor == 0 ? 'transparent' : _color(element.fillColor),
       'fillStyle': 'solid',
       'strokeWidth': element.strokeWidth,
+      'flutterdrawStrokeAlignment': element.strokeAlignment.name,
       'strokeStyle': original['strokeStyle'] ?? 'solid',
       'roughness': element.roughness,
       'opacity': (element.opacity * 100).round(),
