@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/services.dart';
 
 import '../../../infrastructure/serialization/draw_document_codec.dart';
 
@@ -90,7 +90,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_autosaveKey);
-      if (raw == null) return;
+      if (raw == null) {
+      return;
+    }
       final session = jsonDecode(raw);
       if (session is! Map<String, dynamic> ||
           session['document'] is! Map<String, dynamic>) return;
@@ -183,7 +185,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         allowedExtensions: ['flutterdraw'],
         withData: true,
       );
-      if (result == null || result.files.isEmpty) return;
+      if (result == null || result.files.isEmpty) {
+      return;
+    }
       final file = result.files.single;
       final bytes = file.bytes;
       if (bytes == null) {
@@ -200,7 +204,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _lastAutosavedTitle = null;
       _onDocumentChanged();
     } on Object catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+      return;
+    }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось открыть документ: $error')),
       );
@@ -208,7 +214,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Future<void> _saveDocument() async {
-    if (_isSaving) return;
+    if (_isSaving) {
+      return;
+    }
     setState(() {
       _isSaving = true;
       _saveStatus = 'Сохранение…';
@@ -240,12 +248,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       await _writeAutosave();
-      if (!mounted) return;
+      if (!mounted) {
+      return;
+    }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
     } on Object catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+      return;
+    }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
       );
