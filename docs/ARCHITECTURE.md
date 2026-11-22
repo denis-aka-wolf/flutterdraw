@@ -147,7 +147,7 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 ### M2: Editing
 - [x] Text and style inspector with property editing.
 - [x] Undo/redo with grouped drawing and editing gestures.
-- [ ] Images.
+- [x] Images.
 - [x] Grouping and six-way alignment.
 
 ### M3: Documents
