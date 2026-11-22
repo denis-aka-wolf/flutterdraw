@@ -32,7 +32,8 @@ void main() {
       expect(document.elements, hasLength(3));
       expect(document.elements[0].strokeColor, 0xFF123456);
       expect(document.elements[0].fillColor, 0xFFABCDEF);
-      expect(document.elements[0].opacity, 0.75);
+      expect(document.elements[0].strokeOpacity, 0.75);
+      expect(document.elements[0].fillOpacity, 0.75);
       expect(document.elements[0].extraData['flutterdrawGroupId'], 'group-1');
       expect(document.elements[1].points, const [
         Point2(100, 200), Point2(110, 220), Point2(130, 205),
@@ -76,6 +77,8 @@ void main() {
           points: const [Point2(10, 20), Point2(50, 50)],
           strokeColor: 0xFF2563EB,
           strokeAlignment: StrokeAlignment.inside,
+          strokeOpacity: 0.35,
+          fillOpacity: 0.8,
         ),
       ]);
       final json = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
@@ -85,6 +88,8 @@ void main() {
       expect(element['points'], [[0, 0], [40, 30]]);
       expect(element['strokeColor'], '#2563eb');
       expect(element['flutterdrawStrokeAlignment'], 'inside');
+      expect(element['flutterdrawStrokeOpacity'], 35);
+      expect(element['flutterdrawFillOpacity'], 80);
     });
 
     test('rejects another JSON format', () {
