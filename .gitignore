@@ -9,6 +9,7 @@ dist/
 .metadata
 pubspec.lock
 analysis_options.yaml
+/web/
 
 # IDE
 .idea/
