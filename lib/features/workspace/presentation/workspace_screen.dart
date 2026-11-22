@@ -891,9 +891,21 @@ class _InspectorPanel extends StatelessWidget {
                     _section(context, 'Положение обводки'),
                     SegmentedButton<StrokeAlignment>(
                       segments: const [
-                        ButtonSegment(value: StrokeAlignment.inside, label: Text('Внутри')),
-                        ButtonSegment(value: StrokeAlignment.center, label: Text('Центр')),
-                        ButtonSegment(value: StrokeAlignment.outside, label: Text('Снаружи')),
+                        ButtonSegment(
+                          value: StrokeAlignment.inside,
+                          icon: Icon(Icons.border_inner),
+                          tooltip: 'Внутри',
+                        ),
+                        ButtonSegment(
+                          value: StrokeAlignment.center,
+                          icon: Icon(Icons.crop_square),
+                          tooltip: 'По центру',
+                        ),
+                        ButtonSegment(
+                          value: StrokeAlignment.outside,
+                          icon: Icon(Icons.border_outer),
+                          tooltip: 'Снаружи',
+                        ),
                       ],
                       selected: {element.strokeAlignment},
                       onSelectionChanged: (values) =>
