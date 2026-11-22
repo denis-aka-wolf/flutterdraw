@@ -929,7 +929,7 @@ class _InspectorPanel extends StatelessWidget {
                     min: 0,
                     max: 1,
                     divisions: 20,
-                    value: element.fillOpacity.clamp(0.0, 1.0),
+                    value: element.fillOpacity.clamp(0.0, 1.0).toDouble(),
                     onChanged: (value) => controller.updateSelectedProperties(fillOpacity: value),
                   ),
                   const SizedBox(height: 8),
@@ -990,6 +990,7 @@ class _InspectorPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
+                if (element.type != DrawingElementType.image) ...[
                 _section(context, isText
                     ? 'Непрозрачность текста: ${(element.strokeOpacity * 100).round()}%'
                     : 'Непрозрачность обводки: ${(element.strokeOpacity * 100).round()}%'),
@@ -998,6 +999,7 @@ class _InspectorPanel extends StatelessWidget {
                   value: element.strokeOpacity.clamp(0, 1).toDouble(),
                   onChanged: (value) => controller.updateSelectedProperties(strokeOpacity: value),
                 ),
+                ],
                 if (hasFill) ...[
                   _section(context, 'Непрозрачность заливки: ${(element.fillOpacity * 100).round()}%'),
                   Slider(
