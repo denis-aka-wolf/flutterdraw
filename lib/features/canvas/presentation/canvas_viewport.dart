@@ -604,17 +604,26 @@ class _CanvasPainter extends CustomPainter {
     }
     if (element.strokeAlignment == StrokeAlignment.center) {
       canvas.drawPath(path, _strokePaint(element, opacity));
-    } else {
+    } else if (element.strokeAlignment == StrokeAlignment.inside) {
       canvas.save();
-      canvas.clipPath(
-        path,
-        clipOp: element.strokeAlignment == StrokeAlignment.inside
-            ? ClipOp.intersect
-            : ClipOp.difference,
-      );
+      canvas.clipPath(path);
       canvas.drawPath(
         path,
         _strokePaint(element, opacity)..strokeWidth = element.strokeWidth * 2,
+      );
+      canvas.restore();
+    } else {
+      final layerBounds = path.getBounds().inflate(element.strokeWidth * 2);
+      canvas.saveLayer(layerBounds, Paint());
+      canvas.drawPath(
+        path,
+        _strokePaint(element, opacity)..strokeWidth = element.strokeWidth * 2,
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.fill
+          ..blendMode = BlendMode.dstOut,
       );
       canvas.restore();
     }
