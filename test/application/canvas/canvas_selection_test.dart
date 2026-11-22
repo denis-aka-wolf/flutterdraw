@@ -15,6 +15,23 @@ void main() {
       return controller;
     }
 
+    test('clicking an element without dragging does not snap it', () {
+      final controller = CanvasEditorController()
+        ..setActiveTool(CanvasTool.rectangle);
+      controller.pointerDown(const Point2(10, 20));
+      controller.pointerUp(const Point2(110, 120));
+      controller.setActiveTool(CanvasTool.select);
+
+      controller.pointerDown(const Point2(50, 60));
+      controller.pointerMove(const Point2(50, 60));
+      controller.pointerUp(const Point2(50, 60));
+
+      final rectangle = controller.document.elements.single;
+      expect(rectangle.x, 10);
+      expect(rectangle.y, 20);
+      controller.dispose();
+    });
+
     test('selects and moves an element', () {
       final controller = makeControllerWithRectangle();
       controller.pointerDown(const Point2(50, 60));
