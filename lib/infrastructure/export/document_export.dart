@@ -49,12 +49,23 @@ class DocumentExport {
     canvas.scale(pixelRatio);
     canvas.translate(-area.left, -area.top);
     final decodedAssets = <String, ui.Image>{};
+    ui.Picture? picture;
+    ui.Image? renderedImage;
     try {
-      for (final asset in document.assets.values) {
+      for (final element in document.elements) {
+        if (element.type != DrawingElementType.image || element.assetId == null ||
+            decodedAssets.containsKey(element.assetId)) {
+          continue;
+        }
+        final asset = document.assets[element.assetId];
+        if (asset == null) continue;
         final codec = await ui.instantiateImageCodec(Uint8List.fromList(asset.bytes));
-        final frame = await codec.getNextFrame();
-        decodedAssets[asset.id] = frame.image;
-        codec.dispose();
+        try {
+          final frame = await codec.getNextFrame();
+          decodedAssets[element.assetId!] = frame.image;
+        } finally {
+          codec.dispose();
+        }
       }
       for (final element in document.elements) {
         _paintElement(
@@ -63,18 +74,18 @@ class DocumentExport {
           image: element.assetId == null ? null : decodedAssets[element.assetId],
         );
       }
+      picture = recorder.endRecording();
+      renderedImage = await picture.toImage(width, height);
+      final data = await renderedImage.toByteData(format: ui.ImageByteFormat.png);
+      if (data == null) throw StateError('Не удалось сформировать PNG.');
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     } finally {
+      renderedImage?.dispose();
+      picture?.dispose();
       for (final image in decodedAssets.values) {
         image.dispose();
       }
     }
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(width, height);
-    final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    image.dispose();
-    picture.dispose();
-    if (data == null) throw StateError('Не удалось сформировать PNG.');
-    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 
   static String svg(DrawDocument document) {
