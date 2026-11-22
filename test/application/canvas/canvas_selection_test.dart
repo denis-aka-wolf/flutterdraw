@@ -7,6 +7,7 @@ void main() {
   group('CanvasEditorController selection and editing', () {
     CanvasEditorController makeControllerWithRectangle() {
       final controller = CanvasEditorController()
+        ..setSnapToGrid(false)
         ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(10, 20));
       controller.pointerUp(const Point2(110, 120));
