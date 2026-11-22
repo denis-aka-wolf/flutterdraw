@@ -32,7 +32,7 @@ Use the **Файл** menu in the top bar or the keyboard shortcuts below.
 - **Save as:** opens the platform save dialog and saves a separate `.flutterdraw` file.
 - **Export PNG:** renders the complete document bounds to a transparent PNG at 2× resolution, regardless of the current viewport.
 - **Export SVG:** writes the document's vector geometry and text as an SVG file.
-- **Export Excalidraw:** exports supported FlutterDraw elements to Excalidraw JSON.
+- **Export Excalidraw:** exports supported FlutterDraw elements to Excalidraw JSON. Unsupported imported records and preserved metadata are included where the codec can retain them.
 
 When creating a new document or opening another one, FlutterDraw asks for confirmation if the current document has unsaved changes.
 
@@ -82,10 +82,12 @@ On macOS, use Command where the shortcut is written as Ctrl/Cmd.
 
 ## Current format and compatibility
 
-The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
+The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. When opening an Excalidraw file, FlutterDraw converts supported elements into its editing model. The source file is left untouched; use **Save as** to create a native `.flutterdraw` copy. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
 
 ## Known limitations
 
 - Image elements are not available yet. SVG export uses clean vector geometry and does not reproduce the editor's seeded sketch jitter exactly.
 - Autosave recovery is local to the application installation/profile. It is not cloud synchronization.
 - The current file workflow should be treated as an early implementation; keep backups of important documents.
+- PNG/SVG exports contain the current document geometry, not the canvas viewport, selection handles, grid or editor overlays.
+- Imported Excalidraw image elements may be preserved as unsupported records but are not displayed or editable.
