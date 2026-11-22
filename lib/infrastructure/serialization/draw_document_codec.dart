@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../core/geometry/viewport_transform.dart';
 import '../../domain/document/draw_document.dart';
+import '../../domain/document/document_asset.dart';
 import '../../domain/elements/drawing_element.dart';
 
 /// Versioned JSON codec for FlutterDraw's native document format.
@@ -17,6 +18,15 @@ class DrawDocumentCodec {
       'type': formatType,
       'version': currentVersion,
       'elements': document.elements.map(_encodeElement).toList(),
+      'assets': {
+        for (final entry in document.assets.entries)
+          entry.key: {
+            ...entry.value.extraData,
+            'mimeType': entry.value.mimeType,
+            'name': entry.value.name,
+            'data': base64Encode(entry.value.bytes),
+          },
+      },
     };
     if (pretty) {
       return const JsonEncoder.withIndent('  ').convert(data);
@@ -64,9 +74,41 @@ class DrawDocumentCodec {
       elements.add(_decodeElement(raw, index));
     }
 
-    const knownKeys = {'type', 'version', 'elements'};
+    final assets = <String, DocumentAsset>{};
+    final rawAssets = decoded['assets'];
+    if (rawAssets != null && rawAssets is! Map) {
+      throw const FormatException('Поле assets должно быть JSON-объектом.');
+    }
+    if (rawAssets is Map) {
+      for (final entry in rawAssets.entries) {
+        if (entry.key is! String || entry.value is! Map) {
+          throw const FormatException('Некорректная запись ресурса документа.');
+        }
+        final assetData = Map<String, dynamic>.from(entry.value as Map);
+        final mimeType = assetData['mimeType'];
+        final encodedBytes = assetData['data'];
+        if (mimeType is! String || encodedBytes is! String) {
+          throw FormatException('Ресурс ${entry.key} не содержит mimeType или data.');
+        }
+        final assetId = entry.key as String;
+        assets[assetId] = DocumentAsset(
+          id: assetId,
+          mimeType: mimeType,
+          name: assetData['name'] is String ? assetData['name'] as String : null,
+          bytes: base64Decode(encodedBytes),
+          extraData: {
+            for (final field in assetData.entries)
+              if (!const {'mimeType', 'name', 'data'}.contains(field.key))
+                field.key: field.value,
+          },
+        );
+      }
+    }
+
+    const knownKeys = {'type', 'version', 'elements', 'assets'};
     return DrawDocument(
       elements: elements,
+      assets: assets,
       extraData: {
         for (final entry in decoded.entries)
           if (!knownKeys.contains(entry.key)) entry.key: entry.value,
