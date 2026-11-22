@@ -357,10 +357,44 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 272, child: Column(children: [
-                    Expanded(child: _InspectorPanel(controller: _controller)),
-                    SizedBox(height: 230, child: _LayersPanel(controller: _controller)),
-                  ])),
+                  SizedBox(
+                    width: 272,
+                    child: DefaultTabController(
+                      length: 2,
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            TabBar(
+                              tabs: [
+                                Tab(
+                                  icon: Icon(Icons.tune, size: 18),
+                                  text: 'Свойства',
+                                ),
+                                Tab(
+                                  icon: Icon(Icons.layers_outlined, size: 18),
+                                  text: 'Слои',
+                                ),
+                              ],
+                            ),
+                            Expanded(
+                              child: TabBarView(
+                                children: [
+                                  _InspectorPanel(controller: _controller),
+                                  _LayersPanel(controller: _controller),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -670,14 +704,8 @@ class _InspectorPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 272,
-      margin: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+    return Padding(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
@@ -907,10 +935,8 @@ class _LayersPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 12, 12),
+    return Padding(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: colors.surface, borderRadius: BorderRadius.circular(12)),
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
