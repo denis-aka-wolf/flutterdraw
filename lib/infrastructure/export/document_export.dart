@@ -240,7 +240,7 @@ class DocumentExport {
       final start = e.points[e.points.length - 2];
       final end = e.points.last;
       final angle = math.atan2(end.y - start.y, end.x - start.x);
-      final length = math.max(10.0, e.strokeWidth * 4);
+      final length = math.max(10.0, e.strokeWidth * 4).toDouble();
       final head = Path()
         ..moveTo(end.x - length * math.cos(angle - math.pi / 6),
             end.y - length * math.sin(angle - math.pi / 6))

@@ -57,7 +57,7 @@ The **Слои** panel is docked below the inspector on the right. It lists topm
 | Shortcut | Action |
 | --- | --- |
 | Ctrl/Cmd + N | New document |
-| Ctrl/Cmd + O | Open a `.flutterdraw` document |
+| Ctrl/Cmd + O | Open a `.flutterdraw` or Excalidraw document |
 | Ctrl/Cmd + S | Save document (or open Save As for a new document) |
 | Ctrl/Cmd + Shift + S | Save document as… |
 | Ctrl/Cmd + G | Group selected elements |
