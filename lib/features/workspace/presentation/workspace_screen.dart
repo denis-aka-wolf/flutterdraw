@@ -11,6 +11,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../infrastructure/serialization/draw_document_codec.dart';
+import '../../../infrastructure/export/document_export.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
@@ -265,6 +266,50 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
+  Future<void> _exportPng() async {
+    try {
+      final bytes = await DocumentExport.png(_controller.document);
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Экспортировать холст в PNG',
+        fileName: 'FlutterDraw.png',
+        type: FileType.custom,
+        allowedExtensions: ['png'],
+        bytes: bytes,
+      );
+      if (path != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PNG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось экспортировать PNG: $error')),
+      );
+    }
+  }
+
+  Future<void> _exportSvg() async {
+    try {
+      final bytes = Uint8List.fromList(utf8.encode(DocumentExport.svg(_controller.document)));
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Экспортировать холст в SVG',
+        fileName: 'FlutterDraw.svg',
+        type: FileType.custom,
+        allowedExtensions: ['svg'],
+        bytes: bytes,
+      );
+      if (path != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('SVG экспортирован: ${path.split(RegExp(r'[/\\\\]')).last}')),
+        );
+      }
+    } on Object catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось экспортировать SVG: $error')),
+      );
+    }
+  }
+
   Future<void> _saveDocumentAs() async {
     if (_isSaving) return;
     setState(() {
@@ -333,6 +378,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onOpen: _openDocument,
               onSave: _saveDocument,
               onSaveAs: _saveDocumentAs,
+              onExportPng: _exportPng,
+              onExportSvg: _exportSvg,
               saveStatus: _saveStatus,
             ),
             Expanded(
@@ -382,6 +429,8 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onOpen,
     required this.onSave,
     required this.onSaveAs,
+    required this.onExportPng,
+    required this.onExportSvg,
     required this.saveStatus,
   });
 
@@ -391,6 +440,8 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onSave;
   final VoidCallback onSaveAs;
+  final VoidCallback onExportPng;
+  final VoidCallback onExportSvg;
   final String saveStatus;
 
   @override
@@ -437,6 +488,12 @@ class _WorkspaceHeader extends StatelessWidget {
                 case 'saveAs':
                   onSaveAs();
                   break;
+                case 'exportPng':
+                  onExportPng();
+                  break;
+                case 'exportSvg':
+                  onExportSvg();
+                  break;
               }
             },
             itemBuilder: (context) => const [
@@ -475,6 +532,23 @@ class _WorkspaceHeader extends StatelessWidget {
                   leading: Icon(Icons.save_as_outlined),
                   title: Text('Сохранить как…'),
                   trailing: Text('Ctrl+Shift+S'),
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'exportPng',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.image_outlined),
+                  title: Text('Экспорт PNG…'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'exportSvg',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.code),
+                  title: Text('Экспорт SVG…'),
                 ),
               ),
             ],
