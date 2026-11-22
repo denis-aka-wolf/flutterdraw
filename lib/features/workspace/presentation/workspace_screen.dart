@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../infrastructure/files/document_file_writer.dart';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -95,8 +94,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_autosaveKey);
       if (raw == null) {
-      return;
-    }
+        return;
+      }
       final session = jsonDecode(raw);
       if (session is! Map<String, dynamic> ||
           session['document'] is! Map<String, dynamic>) return;
