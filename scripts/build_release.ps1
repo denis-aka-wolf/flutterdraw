@@ -57,10 +57,8 @@ $MissingFolders = @(
 )
 
 if ($MissingFolders.Count -gt 0) {
-    $CreatePlatforms = "windows,android,web"
-    Invoke-Checked -Command "flutter" -Arguments @(
-        "create", "--platforms=$CreatePlatforms", "--project-name", "flutterdraw", "."
-    ) -Description "Preparing platform projects"
+    $MissingList = $MissingFolders -join ", "
+    throw "Required platform folders are missing: $MissingList. Generate them once with: flutter create --platforms=$($Platforms -join ',')."
 }
 
 Invoke-Checked -Command "flutter" -Arguments @("pub", "get") -Description "Installing dependencies"

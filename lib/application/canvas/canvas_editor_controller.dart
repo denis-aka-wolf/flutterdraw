@@ -141,8 +141,9 @@ class CanvasEditorController extends ChangeNotifier {
       if (groupId is String) {
         final groupMatch = RegExp(r'^group-([0-9]+)$').firstMatch(groupId);
         final groupNumber = int.tryParse(groupMatch?.group(1) ?? '');
-        if (groupNumber != null && groupNumber > _groupCounter)
+        if (groupNumber != null && groupNumber > _groupCounter) {
           _groupCounter = groupNumber;
+        }
       }
     }
     _activeTool = CanvasTool.select;
@@ -211,8 +212,9 @@ class CanvasEditorController extends ChangeNotifier {
 
   void updateSelectedText(String value) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) {
       return;
+    }
     final before = _document;
     final original = selected.single;
     final content = value;
@@ -284,7 +286,9 @@ class CanvasEditorController extends ChangeNotifier {
   void setSelectedImageSize({double? width, double? height}) {
     final selected = selectedElements;
     if (selected.length != 1 ||
-        selected.single.type != DrawingElementType.image) return;
+        selected.single.type != DrawingElementType.image) {
+      return;
+    }
     final before = _document;
     final element = selected.single;
     final originalWidth = element.width.abs().clamp(0.001, double.infinity);
