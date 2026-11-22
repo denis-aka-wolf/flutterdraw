@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterdraw/core/geometry/viewport_transform.dart';
 import 'package:flutterdraw/domain/document/draw_document.dart';
+import 'package:flutterdraw/domain/document/document_asset.dart';
 import 'package:flutterdraw/domain/elements/drawing_element.dart';
 import 'package:flutterdraw/infrastructure/serialization/excalidraw_codec.dart';
 
@@ -90,6 +91,46 @@ void main() {
       expect(element['flutterdrawStrokeAlignment'], 'inside');
       expect(element['flutterdrawStrokeOpacity'], 35);
       expect(element['flutterdrawFillOpacity'], 80);
+    });
+
+    test('imports and exports embedded Excalidraw file data', () {
+      const source = '''
+      {
+        "type":"excalidraw","version":2,
+        "elements":[],
+        "files":{
+          "asset-1":{
+            "id":"asset-1",
+            "mimeType":"image/png",
+            "dataURL":"data:image/png;base64,AAEC/w==",
+            "created":123
+          }
+        }
+      }
+      ''';
+
+      final imported = codec.decode(source);
+      final asset = imported.assets['asset-1']!;
+      expect(asset.mimeType, 'image/png');
+      expect(asset.bytes, [0, 1, 2, 255]);
+      expect(asset.extraData['created'], 123);
+
+      final exported = jsonDecode(codec.encode(imported, pretty: false)) as Map<String, dynamic>;
+      expect(exported['files']['asset-1']['dataURL'], 'data:image/png;base64,AAEC/w==');
+    });
+
+    test('exports native embedded assets to Excalidraw file records', () {
+      final document = DrawDocument(assets: {
+        'asset-native': DocumentAsset(
+          id: 'asset-native',
+          mimeType: 'image/jpeg',
+          bytes: [4, 5, 6],
+        ),
+      });
+
+      final exported = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
+      expect(exported['files']['asset-native']['mimeType'], 'image/jpeg');
+      expect(exported['files']['asset-native']['dataURL'], 'data:image/jpeg;base64,BAUG');
     });
 
     test('rejects another JSON format', () {
