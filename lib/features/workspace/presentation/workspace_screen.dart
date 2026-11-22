@@ -923,11 +923,24 @@ class _InspectorPanel extends StatelessWidget {
               children: [
                 Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 14),
+                if (element.type == DrawingElementType.image) ...[
+                  _section(context, 'Непрозрачность изображения: ${(element.fillOpacity * 100).round()}%'),
+                  Slider(
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
+                    value: element.fillOpacity.clamp(0.0, 1.0),
+                    onChanged: (value) => controller.updateSelectedProperties(fillOpacity: value),
+                  ),
+                  const SizedBox(height: 8),
+                ] else ...[
                 _section(context, element.type == DrawingElementType.text ? 'Цвет текста' : 'Цвет обводки'),
+
                 _colorChoices(
                   selectedColor: element.strokeColor,
                   onSelected: (color) => controller.updateSelectedProperties(strokeColor: color),
                 ),
+                ],
                 const SizedBox(height: 14),
                 if (hasFill) ...[
                   _section(context, 'Заливка'),
@@ -938,7 +951,7 @@ class _InspectorPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                 ],
-                if (element.type != DrawingElementType.text) ...[
+                if (element.type != DrawingElementType.text && element.type != DrawingElementType.image) ...[
                   if (element.type == DrawingElementType.rectangle ||
                       element.type == DrawingElementType.ellipse ||
                       element.type == DrawingElementType.diamond) ...[
