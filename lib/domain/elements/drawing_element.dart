@@ -79,6 +79,7 @@ class DrawingElement {
       case DrawingElementType.rectangle:
       case DrawingElementType.ellipse:
       case DrawingElementType.diamond:
+      case DrawingElementType.image:
         return width.abs() >= 2 && height.abs() >= 2;
       case DrawingElementType.text:
         return text.trim().isNotEmpty;
