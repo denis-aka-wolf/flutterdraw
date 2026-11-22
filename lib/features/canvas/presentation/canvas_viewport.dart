@@ -600,7 +600,7 @@ class _CanvasPainter extends CustomPainter {
     }
     path.close();
     if (element.fillColor != 0x00000000) {
-      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withValues(alpha: element.opacity * opacity)..style = PaintingStyle.fill);
+      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withValues(alpha: element.fillOpacity * opacity)..style = PaintingStyle.fill);
     }
     if (element.strokeAlignment == StrokeAlignment.center) {
       canvas.drawPath(path, _strokePaint(element, opacity));
@@ -730,7 +730,7 @@ class _CanvasPainter extends CustomPainter {
   }
 
   Paint _strokePaint(DrawingElement element, double opacity) => Paint()
-    ..color = Color(element.strokeColor).withValues(alpha: element.opacity * opacity)
+    ..color = Color(element.strokeColor).withValues(alpha: element.strokeOpacity * opacity)
     ..style = PaintingStyle.stroke
     ..strokeWidth = element.strokeWidth
     ..strokeCap = StrokeCap.round
