@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 import '../../../infrastructure/serialization/draw_document_codec.dart';
 
@@ -55,7 +56,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _savedContent != _codec.encode(_controller.document, pretty: false);
 
   void _onDocumentChanged() {
-    if (_restoringSession) return;
+    if (_restoringSession) {
+      return;
+    }
     if (mounted) {
       setState(() => _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено');
     }
@@ -66,7 +69,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   Future<void> _writeAutosave() async {
     final content = _codec.encode(_controller.document, pretty: false);
     if (content == _lastAutosavedContent &&
-        _documentTitle == _lastAutosavedTitle) return;
+        _documentTitle == _lastAutosavedTitle) {
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_autosaveKey, jsonEncode({
       'title': _documentTitle,
@@ -90,7 +95,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       if (session is! Map<String, dynamic> ||
           session['document'] is! Map<String, dynamic>) return;
       final document = _codec.decode(jsonEncode(session['document']));
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _documentTitle = session['title'] is String
             ? session['title'] as String
@@ -221,7 +228,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         allowedExtensions: ['flutterdraw'],
         bytes: bytes,
       );
-      if (savedPath == null) return;
+      if (savedPath == null) {
+        return;
+      }
       final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
       _savedContent = _codec.encode(_controller.document, pretty: false);
       if (mounted) setState(() {
@@ -850,8 +859,7 @@ class _LayersPanel extends StatelessWidget {
               : ReorderableListView.builder(
                   buildDefaultDragHandles: true,
                   itemCount: layers.length,
-                  onReorder: (oldIndex, newIndex) {
-                    if (newIndex > oldIndex) newIndex--;
+                  onReorderItem: (oldIndex, newIndex) {
                     final reordered = [...layers];
                     final item = reordered.removeAt(oldIndex);
                     reordered.insert(newIndex, item);
