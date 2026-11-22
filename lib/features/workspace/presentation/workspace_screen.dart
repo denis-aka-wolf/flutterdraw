@@ -16,6 +16,7 @@ import '../../../infrastructure/export/document_export.dart';
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
 import '../../../domain/elements/drawing_element.dart';
+import '../../../domain/document/document_asset.dart';
 import '../../canvas/presentation/canvas_help_overlay.dart';
 import '../../canvas/presentation/canvas_viewport.dart';
 
@@ -188,6 +189,43 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         return KeyEventResult.handled;
       default:
         return KeyEventResult.ignored;
+    }
+  }
+
+  Future<void> _importImage() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        throw const FormatException('Не удалось прочитать изображение.');
+      }
+      final extension = file.extension?.toLowerCase();
+      final mimeType = switch (extension) {
+        'png' => 'image/png',
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'bmp' => 'image/bmp',
+        _ => 'application/octet-stream',
+      };
+      final asset = DocumentAsset(
+        id: 'asset-${DateTime.now().microsecondsSinceEpoch}',
+        mimeType: mimeType,
+        name: file.name,
+        bytes: bytes,
+      );
+      _controller.addImage(asset, const Point2(100, 100));
+      _onDocumentChanged();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось добавить изображение: $error')),
+      );
     }
   }
 
@@ -428,6 +466,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onExportPng: _exportPng,
               onExportSvg: _exportSvg,
               onExportExcalidraw: _exportExcalidraw,
+              onImportImage: _importImage,
               saveStatus: _saveStatus,
             ),
             Expanded(
@@ -514,6 +553,7 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onExportPng,
     required this.onExportSvg,
     required this.onExportExcalidraw,
+    required this.onImportImage,
     required this.saveStatus,
   });
 
@@ -526,6 +566,7 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onExportPng;
   final VoidCallback onExportSvg;
   final VoidCallback onExportExcalidraw;
+  final VoidCallback onImportImage;
   final String saveStatus;
 
   @override
@@ -581,6 +622,9 @@ class _WorkspaceHeader extends StatelessWidget {
                 case 'exportExcalidraw':
                   onExportExcalidraw();
                   break;
+                case 'importImage':
+                  onImportImage();
+                  break;
               }
             },
             itemBuilder: (context) => const [
@@ -619,6 +663,15 @@ class _WorkspaceHeader extends StatelessWidget {
                   leading: Icon(Icons.save_as_outlined),
                   title: Text('Сохранить как…'),
                   trailing: Text('Ctrl+Shift+S'),
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'importImage',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.add_photo_alternate_outlined),
+                  title: Text('Добавить изображение…'),
                 ),
               ),
               PopupMenuDivider(),
@@ -1095,6 +1148,7 @@ class _LayersPanel extends StatelessWidget {
       DrawingElementType.arrow => 'Стрелка',
       DrawingElementType.freehand => 'Рисунок от руки',
       DrawingElementType.text => 'Текст',
+      DrawingElementType.image => 'Изображение',
     };
   }
 
@@ -1106,6 +1160,7 @@ class _LayersPanel extends StatelessWidget {
     DrawingElementType.arrow => Icons.arrow_right_alt,
     DrawingElementType.freehand => Icons.gesture,
     DrawingElementType.text => Icons.text_fields,
+    DrawingElementType.image => Icons.image_outlined,
   };
 
   @override
