@@ -143,7 +143,9 @@ class CanvasEditorController extends ChangeNotifier {
   void addText(Point2 position, String value, {double fontSize = 24}) {
     final before = _document;
     final content = value.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty) {
+      return;
+    }
     _idCounter++;
     final width = math.max(160.0, math.min(520.0, content.length * fontSize * 0.62));
     final lines = content.split('\n').length;
@@ -207,7 +209,9 @@ class CanvasEditorController extends ChangeNotifier {
 
   void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, StrokeAlignment? strokeAlignment, double? opacity, double? strokeOpacity, double? fillOpacity, String? fontFamily, String? textAlign}) {
     final selected = selectedElements;
-    if (selected.isEmpty) return;
+    if (selected.isEmpty) {
+      return;
+    }
     final before = _document;
     for (final element in selected) {
       _document = _document.replaceElement(element.copyWith(
@@ -285,7 +289,9 @@ class CanvasEditorController extends ChangeNotifier {
   DrawingElement? selectElementAt(Point2 point, {double tolerance = 8, bool preserveSelection = false}) {
     final hit = _hitTest(point, tolerance);
     if (hit == null) return null;
-    if (preserveSelection && _selectedIds.contains(hit.id)) return hit;
+    if (preserveSelection && _selectedIds.contains(hit.id)) {
+      return hit;
+    }
     final groupId = hit.extraData['flutterdrawGroupId'];
     final ids = groupId is String
         ? _document.elements.where((e) => e.extraData['flutterdrawGroupId'] == groupId).map((e) => e.id)
@@ -311,7 +317,9 @@ class CanvasEditorController extends ChangeNotifier {
   }
 
   void setActiveTool(CanvasTool tool) {
-    if (_activeTool == tool) return;
+    if (_activeTool == tool) {
+      return;
+    }
     _rollbackSelectionGesture();
     _activeTool = tool;
     _clearGesture();
@@ -346,7 +354,9 @@ class CanvasEditorController extends ChangeNotifier {
       return;
     }
 
-    if (_activeTool != CanvasTool.select) return;
+    if (_activeTool != CanvasTool.select) {
+      return;
+    }
     _gestureDocumentBefore = _document;
 
     final selectedBounds = selectionBounds;
