@@ -32,11 +32,10 @@ FlutterDraw is under active development. The current application includes:
 - Undo/redo history with gesture grouping.
 - Native `.flutterdraw` JSON documents with open, save and new-document actions.
 - Excalidraw JSON import/export for supported elements, with preservation of unsupported records and metadata.
-- PNG export at 2× resolution and SVG vector export.
+- Embedded image elements with file-picker import, canvas selection/move/resize, opacity control, and self-contained document assets.
+- PNG export at 2× resolution and SVG vector export, including embedded images.
 - Debounced local autosave and recovery of the last editing session.
 - File menu and keyboard shortcuts for document operations.
-
-Image elements are not yet implemented.
 
 
 ## Keyboard shortcuts
@@ -97,9 +96,9 @@ The script runs analysis and tests, then creates Windows, Android APK and Web pa
 
 ## File formats and export
 
-The native `.flutterdraw` format is FlutterDraw's editable document format. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. The codec maps common shapes, lines, arrows, freehand strokes, text and group membership. Unknown metadata and unsupported element records are retained where possible, but unsupported elements such as images are not rendered or editable yet.
+The native `.flutterdraw` format is FlutterDraw's editable document format. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. The codec maps common shapes, lines, arrows, freehand strokes, text and group membership. Unknown metadata and unsupported element records are retained where possible, including image elements with embedded file data.
 
-PNG export renders the document bounds at 2× resolution. SVG export writes vector geometry and text; it does not reproduce the seeded sketch jitter pixel-for-pixel. Export commands are available from the **Файл** menu.
+PNG export renders the document bounds at 2× resolution. SVG export writes vector geometry, text and embedded image data; PNG export renders embedded images. Neither export reproduces the seeded sketch jitter pixel-for-pixel. Export commands are available from the **Файл** menu.
 
 ## License
 
