@@ -70,9 +70,21 @@ if (Test-Path $ReleaseRoot) {
 }
 New-Item -ItemType Directory -Force -Path $ReleaseRoot | Out-Null
 
-$FlutterVersion = (& flutter --version | Select-Object -First 1)
-if ($LASTEXITCODE -ne 0) {
-    throw "Could not determine the Flutter version."
+$FlutterVersionOutput = & flutter --version --machine 2>&1
+$FlutterVersionExitCode = $LASTEXITCODE
+if ($FlutterVersionExitCode -ne 0) {
+    throw "Could not determine the Flutter version. Run: flutter --version --machine. Details: $($FlutterVersionOutput -join ' ')"
+}
+
+try {
+    $FlutterVersionInfo = ($FlutterVersionOutput -join "`n") | ConvertFrom-Json -ErrorAction Stop
+    $FlutterVersion = $FlutterVersionInfo.frameworkVersion
+    if ([string]::IsNullOrWhiteSpace($FlutterVersion)) {
+        throw "The frameworkVersion field is empty."
+    }
+}
+catch {
+    throw "Could not parse the Flutter version output. Run: flutter --version --machine. Details: $($FlutterVersionOutput -join ' ')"
 }
 
 foreach ($Platform in $Platforms) {
