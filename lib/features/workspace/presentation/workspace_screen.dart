@@ -923,12 +923,22 @@ class _InspectorPanel extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                 ],
-                _section(context, 'Непрозрачность: ${(element.opacity * 100).round()}%'),
+                _section(context, isText
+                    ? 'Непрозрачность текста: ${(element.strokeOpacity * 100).round()}%'
+                    : 'Непрозрачность обводки: ${(element.strokeOpacity * 100).round()}%'),
                 Slider(
-                  min: 0.05, max: 1, divisions: 19,
-                  value: element.opacity.clamp(0.05, 1).toDouble(),
-                  onChanged: (value) => controller.updateSelectedProperties(opacity: value),
+                  min: 0, max: 1, divisions: 20,
+                  value: element.strokeOpacity.clamp(0, 1).toDouble(),
+                  onChanged: (value) => controller.updateSelectedProperties(strokeOpacity: value),
                 ),
+                if (hasFill) ...[
+                  _section(context, 'Непрозрачность заливки: ${(element.fillOpacity * 100).round()}%'),
+                  Slider(
+                    min: 0, max: 1, divisions: 20,
+                    value: element.fillOpacity.clamp(0, 1).toDouble(),
+                    onChanged: (value) => controller.updateSelectedProperties(fillOpacity: value),
+                  ),
+                ],
                 if (isText) ...[
                   const Divider(height: 26),
                   _section(context, 'Содержимое'),
