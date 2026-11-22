@@ -119,7 +119,7 @@ class DocumentExport {
     if (e.type == DrawingElementType.text) {
       final painter = TextPainter(
         text: TextSpan(text: e.text, style: TextStyle(
-          color: Color(e.strokeColor).withValues(alpha: e.fillOpacity),
+          color: Color(e.strokeColor).withValues(alpha: e.strokeOpacity),
           fontSize: e.fontSize, fontFamily: e.fontFamily, height: 1.2,
         )),
         textDirection: TextDirection.ltr,
@@ -158,7 +158,7 @@ class DocumentExport {
     }
     if (e.fillColor != 0) {
       canvas.drawPath(path, Paint()
-        ..color = Color(e.fillColor).withValues(alpha: e.opacity)
+        ..color = Color(e.fillColor).withValues(alpha: e.fillOpacity)
         ..style = PaintingStyle.fill);
     }
     canvas.drawPath(path, stroke);
