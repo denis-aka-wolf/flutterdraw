@@ -20,7 +20,7 @@ The workspace is organized around four areas:
 5. Use the hand tool, Space + drag, or the middle mouse button to pan the canvas.
 6. Use the mouse wheel to zoom around the pointer.
 
-The inspector changes according to the selected element. Text can also be edited directly on the canvas by double-clicking it. Right-click the canvas or an object to open the context menu. It includes clipboard, grouping, alignment, z-order and delete actions.
+The inspector changes according to the selected element. Shape outlines and fills have independent opacity controls; changing one does not affect the other. Text has its own opacity control. Text can also be edited directly on the canvas by double-clicking it. Right-click the canvas or an object to open the context menu. It includes clipboard, grouping, alignment, z-order and delete actions.
 
 ## Documents and files
 
