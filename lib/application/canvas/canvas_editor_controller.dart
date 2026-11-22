@@ -197,6 +197,7 @@ class CanvasEditorController extends ChangeNotifier {
       if (strokeColor != null) 'strokeColor',
       if (fillColor != null) 'fillColor',
       if (strokeWidth != null) 'strokeWidth',
+      if (strokeAlignment != null) 'strokeAlignment',
       if (opacity != null) 'opacity',
       if (fontFamily != null) 'fontFamily',
       if (textAlign != null) 'textAlign',
