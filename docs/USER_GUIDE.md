@@ -27,7 +27,7 @@ The inspector changes according to the selected element. Text can also be edited
 Use the **Файл** menu in the top bar or the keyboard shortcuts below.
 
 - **New:** starts an empty document.
-- **Open:** opens a `.flutterdraw` document or an Excalidraw `.excalidraw` / JSON file.
+- **Open:** opens a `.flutterdraw` document or an Excalidraw `.excalidraw` / JSON file. Imported Excalidraw files are converted into the native editing model; the original file is not overwritten by Save.
 - **Save:** writes changes to the currently opened/saved file. If the document has no file path yet, Save opens the save dialog.
 - **Save as:** opens the platform save dialog and saves a separate `.flutterdraw` file.
 - **Export PNG:** renders the complete document bounds to a transparent PNG at 2× resolution, regardless of the current viewport.
@@ -50,7 +50,7 @@ Select two or more objects and choose **Сгруппировать** from the co
 
 The context menu provides left, horizontal-center, right, top, vertical-center and bottom alignment for multi-selection. Alignment uses the combined bounds of the selected objects.
 
-The **Слои** panel is docked below the inspector on the right. It lists topmost objects first. Select a row to select its object (or its entire group), and drag rows to change stacking order. The switches control grid snapping and smart alignment guides. Grid snapping uses a 24-world-unit grid; smart guides snap nearby object edges and centers while moving a selection.
+The right sidebar combines **Свойства** and **Слои** in separate tabs. The **Слои** tab lists topmost objects first. Select a row to select its object (or its entire group), and drag rows to change stacking order. The switches control grid snapping and smart alignment guides. Grid snapping uses a 24-world-unit grid; smart guides snap nearby object edges and centers while moving a selection.
 
 ## Keyboard shortcuts
 
@@ -82,7 +82,7 @@ On macOS, use Command where the shortcut is written as Ctrl/Cmd.
 
 ## Current format and compatibility
 
-The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can also be imported and exported. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
+The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
 
 ## Known limitations
 
