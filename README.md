@@ -31,10 +31,12 @@ FlutterDraw is under active development. The current application includes:
 - Grid snapping, smart alignment guides and a reorderable layers panel.
 - Undo/redo history with gesture grouping.
 - Native `.flutterdraw` JSON documents with open, save and new-document actions.
+- Excalidraw JSON import/export for supported elements, with preservation of unsupported records and metadata.
+- PNG export at 2× resolution and SVG vector export.
 - Debounced local autosave and recovery of the last editing session.
 - File menu and keyboard shortcuts for document operations.
 
-Excalidraw import/export, image elements, and PNG/SVG export are not yet implemented.
+Image elements are not yet implemented.
 
 
 ## Keyboard shortcuts
@@ -56,7 +58,7 @@ Excalidraw import/export, image elements, and PNG/SVG export are not yet impleme
 | Ctrl/Cmd + Z | Undo |
 | Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y | Redo |
 | Ctrl/Cmd + N | New document |
-| Ctrl/Cmd + O | Open a `.flutterdraw` document |
+| Ctrl/Cmd + O | Open a `.flutterdraw` or Excalidraw document |
 | Ctrl/Cmd + S | Save the current document |
 | Ctrl/Cmd + G | Group selected elements |
 | Ctrl/Cmd + Shift + G | Ungroup selected elements |
