@@ -134,7 +134,7 @@ class ExcalidrawCodec {
       'flutterdrawStrokeAlignment': element.strokeAlignment.name,
       'strokeStyle': original['strokeStyle'] ?? 'solid',
       'roughness': element.roughness,
-      'opacity': 100,
+      'opacity': (element.strokeOpacity * 100).round(),
       'flutterdrawStrokeOpacity': (element.strokeOpacity * 100).round(),
       'flutterdrawFillOpacity': (element.fillOpacity * 100).round(),
       'seed': element.seed,
