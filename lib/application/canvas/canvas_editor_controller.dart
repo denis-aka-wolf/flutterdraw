@@ -353,8 +353,9 @@ class CanvasEditorController extends ChangeNotifier {
 
   void setSelectedTextFontSize(double value) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text) {
       return;
+    }
     final before = _document;
     final original = selected.single;
     final fontSize = value.clamp(10.0, 96.0).toDouble();
