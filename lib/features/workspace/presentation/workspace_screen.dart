@@ -1162,7 +1162,9 @@ class _InspectorPanel extends StatelessWidget {
             ),
             onFieldSubmitted: (raw) {
               final parsed = double.tryParse(raw);
-              if (parsed != null && parsed.isFinite) onSubmitted(parsed);
+              if (parsed != null && parsed.isFinite) {
+                onSubmitted(parsed);
+              }
             },
           ),
         ),
