@@ -23,6 +23,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
   ViewportTransform _transform = const ViewportTransform();
   final FocusNode _focusNode = FocusNode(debugLabel: 'FlutterDraw canvas');
 
+  final Map<String, Uint8List> _imageBytesCache = {};
+
   bool _spacePressed = false;
   bool _shiftPressed = false;
   bool _isPanning = false;
@@ -204,7 +206,12 @@ class _CanvasViewportState extends State<CanvasViewport> {
     final asset = widget.controller.document.assets[element.assetId];
     if (asset == null) return const SizedBox.shrink();
     final topLeft = _transform.worldToScreen(Point2(element.x, element.y));
+    final imageBytes = _imageBytesCache.putIfAbsent(
+      element.assetId!,
+      () => Uint8List.fromList(asset.bytes),
+    );
     return Positioned(
+      key: ValueKey('image-${element.id}'),
       left: topLeft.x,
       top: topLeft.y,
       width: element.width * _transform.scale,
@@ -213,7 +220,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
         child: Opacity(
           opacity: element.fillOpacity.clamp(0.0, 1.0).toDouble(),
           child: Image.memory(
-            Uint8List.fromList(asset.bytes),
+            imageBytes,
             fit: BoxFit.fill,
             errorBuilder: (context, error, stackTrace) => const ColoredBox(
               color: Color(0x22FF0000),
