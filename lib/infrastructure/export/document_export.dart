@@ -38,8 +38,8 @@ class DocumentExport {
 
   static Future<Uint8List> png(DrawDocument document, {double pixelRatio = 2}) async {
     final area = bounds(document);
-    final width = math.max(1, (area.width * pixelRatio).ceil());
-    final height = math.max(1, (area.height * pixelRatio).ceil());
+    final width = math.max(1, (area.width * pixelRatio).ceil()).toInt();
+    final height = math.max(1, (area.height * pixelRatio).ceil()).toInt();
     if (width > 16000 || height > 16000 || width * height > 100000000) {
       throw const FormatException('Изображение слишком большое для экспорта.');
     }
@@ -134,34 +134,27 @@ class DocumentExport {
     }
     if (e.type == DrawingElementType.line || e.type == DrawingElementType.arrow ||
         e.type == DrawingElementType.freehand) {
-      if (e.points.isEmpty) return;
-      final path = Path()..moveTo(e.points.first.x, e.points.first.y);
-      for (final p in e.points.skip(1)) { path.lineTo(p.x, p.y); }
-      canvas.drawPath(path, stroke);
-      if (e.type == DrawingElementType.arrow && e.points.length >= 2) {
-        final a = e.points[e.points.length - 2], b = e.points.last;
-        final angle = math.atan2(b.y - a.y, b.x - a.x);
-        final length = math.max(10.0, e.strokeWidth * 4);
-        final head = Path()
-          ..moveTo(b.x - length * math.cos(angle - math.pi / 6), b.y - length * math.sin(angle - math.pi / 6))
-          ..lineTo(b.x, b.y)
-          ..lineTo(b.x - length * math.cos(angle + math.pi / 6), b.y - length * math.sin(angle + math.pi / 6));
-        canvas.drawPath(head, stroke);
-      }
+      _paintStroke(canvas, e, stroke);
       return;
     }
     final rect = Rect.fromLTRB(e.left, e.top, e.right, e.bottom);
     final path = Path();
     switch (e.type) {
-      case DrawingElementType.rectangle: path.addRect(rect);
-      case DrawingElementType.ellipse: path.addOval(rect);
-      case DrawingElementType.diamond:
-        path.moveTo(rect.center.dx, rect.top);
-        path.lineTo(rect.right, rect.center.dy);
-        path.lineTo(rect.center.dx, rect.bottom);
-        path.lineTo(rect.left, rect.center.dy);
+      case DrawingElementType.rectangle:
+        _roughPolygon(path, [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft], e);
         path.close();
-      default: return;
+      case DrawingElementType.ellipse:
+        _roughEllipse(path, rect, e);
+      case DrawingElementType.diamond:
+        _roughPolygon(path, [
+          rect.topCenter,
+          rect.centerRight,
+          rect.bottomCenter,
+          rect.centerLeft,
+        ], e);
+        path.close();
+      default:
+        return;
     }
     if (e.fillColor != 0) {
       canvas.drawPath(path, Paint()
@@ -169,6 +162,93 @@ class DocumentExport {
         ..style = PaintingStyle.fill);
     }
     canvas.drawPath(path, stroke);
+  }
+
+  static void _roughPolygon(Path path, List<Offset> corners, DrawingElement e) {
+    final random = math.Random(e.seed);
+    for (var side = 0; side < corners.length; side++) {
+      final start = corners[side];
+      final end = corners[(side + 1) % corners.length];
+      if (side == 0) path.moveTo(start.dx, start.dy);
+      const segments = 6;
+      for (var i = 1; i <= segments; i++) {
+        final t = i / segments;
+        var x = start.dx + (end.dx - start.dx) * t;
+        var y = start.dy + (end.dy - start.dy) * t;
+        if (i < segments && e.roughness > 0) {
+          final jitter = (random.nextDouble() * 2 - 1) * e.roughness;
+          final dx = end.dx - start.dx;
+          final dy = end.dy - start.dy;
+          final length = math.sqrt(dx * dx + dy * dy);
+          if (length > 0) {
+            x += -dy / length * jitter;
+            y += dx / length * jitter;
+          }
+        }
+        path.lineTo(x, y);
+      }
+    }
+  }
+
+  static void _roughEllipse(Path path, Rect rect, DrawingElement e) {
+    final random = math.Random(e.seed);
+    final center = rect.center;
+    final rx = rect.width / 2;
+    final ry = rect.height / 2;
+    const count = 48;
+    for (var i = 0; i <= count; i++) {
+      final angle = math.pi * 2 * i / count;
+      final jitter = (random.nextDouble() * 2 - 1) * e.roughness;
+      final x = center.dx + (rx + jitter) * math.cos(angle);
+      final y = center.dy + (ry + jitter) * math.sin(angle);
+      if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
+    }
+  }
+
+  static void _paintStroke(Canvas canvas, DrawingElement e, Paint paint) {
+    if (e.points.isEmpty) return;
+    final path = Path();
+    if ((e.type == DrawingElementType.line || e.type == DrawingElementType.arrow) &&
+        e.points.length == 2) {
+      final start = e.points.first;
+      final end = e.points.last;
+      final dx = end.x - start.x;
+      final dy = end.y - start.y;
+      final length = math.sqrt(dx * dx + dy * dy);
+      final random = math.Random(e.seed);
+      const segments = 10;
+      path.moveTo(start.x, start.y);
+      for (var i = 1; i <= segments; i++) {
+        final t = i / segments;
+        var x = start.x + dx * t;
+        var y = start.y + dy * t;
+        if (i < segments && length > 0 && e.roughness > 0) {
+          final jitter = (random.nextDouble() * 2 - 1) * e.roughness;
+          x += -dy / length * jitter;
+          y += dx / length * jitter;
+        }
+        path.lineTo(x, y);
+      }
+    } else {
+      path.moveTo(e.points.first.x, e.points.first.y);
+      for (var i = 1; i < e.points.length; i++) {
+        path.lineTo(e.points[i].x, e.points[i].y);
+      }
+    }
+    canvas.drawPath(path, paint);
+    if (e.type == DrawingElementType.arrow && e.points.length >= 2) {
+      final start = e.points[e.points.length - 2];
+      final end = e.points.last;
+      final angle = math.atan2(end.y - start.y, end.x - start.x);
+      final length = math.max(10.0, e.strokeWidth * 4);
+      final head = Path()
+        ..moveTo(end.x - length * math.cos(angle - math.pi / 6),
+            end.y - length * math.sin(angle - math.pi / 6))
+        ..lineTo(end.x, end.y)
+        ..lineTo(end.x - length * math.cos(angle + math.pi / 6),
+            end.y - length * math.sin(angle + math.pi / 6));
+      canvas.drawPath(head, paint);
+    }
   }
 
   static String _hex(int color) => '#${(color & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
