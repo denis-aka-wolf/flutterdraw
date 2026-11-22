@@ -31,9 +31,13 @@ class DrawingElement {
     this.fontFamily = 'Roboto',
     this.textAlign = 'left',
     this.fillColor = 0x00000000,
-    this.opacity = 1,
+    double opacity = 1,
+    double? strokeOpacity,
+    double? fillOpacity,
     Map<String, Object?> extraData = const {},
-  })  : points = List.unmodifiable(points),
+  })  : strokeOpacity = strokeOpacity ?? opacity,
+        fillOpacity = fillOpacity ?? opacity,
+        points = List.unmodifiable(points),
         extraData = Map.unmodifiable(extraData);
 
   final String id;
@@ -53,7 +57,11 @@ class DrawingElement {
   final String fontFamily;
   final String textAlign;
   final int fillColor;
-  final double opacity;
+  final double strokeOpacity;
+  final double fillOpacity;
+
+  /// Legacy alias retained for callers that used the former shared opacity.
+  double get opacity => strokeOpacity;
 
   /// Fields unknown to this version of FlutterDraw, retained for round trips.
   final Map<String, Object?> extraData;
@@ -147,6 +155,8 @@ class DrawingElement {
     String? textAlign,
     int? fillColor,
     double? opacity,
+    double? strokeOpacity,
+    double? fillOpacity,
     Map<String, Object?>? extraData,
   }) {
     return DrawingElement(
@@ -167,7 +177,8 @@ class DrawingElement {
       fontFamily: fontFamily ?? this.fontFamily,
       textAlign: textAlign ?? this.textAlign,
       fillColor: fillColor ?? this.fillColor,
-      opacity: opacity ?? this.opacity,
+      strokeOpacity: strokeOpacity ?? opacity ?? this.strokeOpacity,
+      fillOpacity: fillOpacity ?? opacity ?? this.fillOpacity,
       extraData: extraData ?? this.extraData,
     );
   }
