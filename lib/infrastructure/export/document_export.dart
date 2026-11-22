@@ -72,9 +72,9 @@ class DocumentExport {
         case DrawingElementType.rectangle:
           out.write('<rect x="${e.left}" y="${e.top}" width="${e.width.abs()}" height="${e.height.abs()}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.ellipse:
-          out.write('<ellipse cx="${(e.left + e.right) / 2}" cy="${(e.top + e.bottom) / 2}" rx="${e.width.abs() / 2}" ry="${e.height.abs() / 2}" fill="$fill" $common/>');
+          out.write('<ellipse cx="${(e.left + e.right) / 2}" cy="${(e.top + e.bottom) / 2}" rx="${e.width.abs() / 2}" ry="${e.height.abs() / 2}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.diamond:
-          out.write('<path d="M ${(e.left + e.right) / 2} ${e.top} L ${e.right} ${(e.top + e.bottom) / 2} L ${(e.left + e.right) / 2} ${e.bottom} L ${e.left} ${(e.top + e.bottom) / 2} Z" fill="$fill" $common/>');
+          out.write('<path d="M ${(e.left + e.right) / 2} ${e.top} L ${e.right} ${(e.top + e.bottom) / 2} L ${(e.left + e.right) / 2} ${e.bottom} L ${e.left} ${(e.top + e.bottom) / 2} Z" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.line:
         case DrawingElementType.arrow:
         case DrawingElementType.freehand:
