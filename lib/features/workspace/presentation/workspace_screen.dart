@@ -473,7 +473,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             Expanded(
               child: Row(
                 children: [
-                  _ToolRail(controller: _controller),
+                  _ToolRail(controller: _controller, onImportImage: _importImage),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
@@ -762,9 +762,10 @@ class _WorkspaceHeader extends StatelessWidget {
 }
 
 class _ToolRail extends StatelessWidget {
-  const _ToolRail({required this.controller});
+  const _ToolRail({required this.controller, required this.onImportImage});
 
   final CanvasEditorController controller;
+  final VoidCallback onImportImage;
 
   @override
   Widget build(BuildContext context) {
@@ -837,6 +838,15 @@ class _ToolRail extends StatelessWidget {
                 tool: CanvasTool.freehand,
                 icon: Icons.gesture,
                 tooltip: 'Рисование от руки',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Divider(height: 1),
+              ),
+              IconButton(
+                tooltip: 'Вставить изображение',
+                onPressed: onImportImage,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
               ),
             ],
           );
