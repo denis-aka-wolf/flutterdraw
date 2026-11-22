@@ -268,9 +268,12 @@ class DrawDocumentCodec {
 
   int _optionalInt(Map<String, dynamic> data, String key, int fallback) {
     final value = data[key];
-    if (value == null) return fallback;
-    if (value is! int)
+    if (value == null) {
+      return fallback;
+    }
+    if (value is! int) {
       throw FormatException('Поле $key должно быть целым числом.');
+    }
     return value;
   }
 

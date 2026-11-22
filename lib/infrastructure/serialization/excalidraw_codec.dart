@@ -127,7 +127,9 @@ class ExcalidrawCodec {
       'image' => DrawingElementType.image,
       _ => null,
     };
-    if (type == null) return null;
+    if (type == null) {
+      return null;
+    }
     final x = _number(raw['x']);
     final y = _number(raw['y']);
     final width = _number(raw['width']);
@@ -263,7 +265,9 @@ class ExcalidrawCodec {
   static int _integer(Object? value, int fallback) =>
       value is int ? value : fallback;
   static int _parseColor(Object? value, int fallback) {
-    if (value is! String || value == 'transparent') return fallback;
+    if (value is! String || value == 'transparent') {
+      return fallback;
+    }
     final hex = value.startsWith('#') ? value.substring(1) : value;
     final parsed = int.tryParse(hex, radix: 16);
     return parsed == null ? fallback : 0xFF000000 | (parsed & 0xFFFFFF);
