@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/gestures.dart';
 import 'package:material_ui/material_ui.dart';
@@ -198,6 +199,31 @@ class _CanvasViewportState extends State<CanvasViewport> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _inlineTextFocus?.requestFocus();
     });
+  }
+
+  Widget _buildImageElement(DrawingElement element) {
+    final asset = widget.controller.document.assets[element.assetId];
+    if (asset == null) return const SizedBox.shrink();
+    final topLeft = _transform.worldToScreen(Point2(element.x, element.y));
+    return Positioned(
+      left: topLeft.x,
+      top: topLeft.y,
+      width: element.width * _transform.scale,
+      height: element.height * _transform.scale,
+      child: IgnorePointer(
+        child: Opacity(
+          opacity: element.fillOpacity.clamp(0.0, 1.0),
+          child: Image.memory(
+            Uint8List.fromList(asset.bytes),
+            fit: BoxFit.fill,
+            errorBuilder: (context, error, stackTrace) => const ColoredBox(
+              color: Color(0x22FF0000),
+              child: Center(child: Icon(Icons.broken_image_outlined)),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildInlineTextEditor() {
@@ -435,6 +461,11 @@ class _CanvasViewportState extends State<CanvasViewport> {
                           alignmentGuidesY: widget.controller.alignmentGuidesY,
                         ),
                       )),
+                      for (final element in widget.controller.document.elements)
+                        if (element.type == DrawingElementType.image &&
+                            element.assetId != null &&
+                            widget.controller.document.assets[element.assetId] != null)
+                          _buildImageElement(element),
                       if (_editingTextId != null) _buildInlineTextEditor(),
                     ],
                   );
