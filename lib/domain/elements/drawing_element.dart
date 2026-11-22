@@ -8,6 +8,7 @@ enum DrawingElementType {
   arrow,
   freehand,
   text,
+  image,
 }
 
 enum StrokeAlignment { center, inside, outside }
@@ -31,6 +32,7 @@ class DrawingElement {
     this.fontFamily = 'Roboto',
     this.textAlign = 'left',
     this.fillColor = 0x00000000,
+    this.assetId,
     double opacity = 1,
     double? strokeOpacity,
     double? fillOpacity,
@@ -57,6 +59,7 @@ class DrawingElement {
   final String fontFamily;
   final String textAlign;
   final int fillColor;
+  final String? assetId;
   final double strokeOpacity;
   final double fillOpacity;
 
@@ -154,6 +157,7 @@ class DrawingElement {
     String? fontFamily,
     String? textAlign,
     int? fillColor,
+    String? assetId,
     double? opacity,
     double? strokeOpacity,
     double? fillOpacity,
@@ -177,6 +181,7 @@ class DrawingElement {
       fontFamily: fontFamily ?? this.fontFamily,
       textAlign: textAlign ?? this.textAlign,
       fillColor: fillColor ?? this.fillColor,
+      assetId: assetId ?? this.assetId,
       strokeOpacity: strokeOpacity ?? opacity ?? this.strokeOpacity,
       fillOpacity: fillOpacity ?? opacity ?? this.fillOpacity,
       extraData: extraData ?? this.extraData,
