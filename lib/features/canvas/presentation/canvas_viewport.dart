@@ -602,7 +602,22 @@ class _CanvasPainter extends CustomPainter {
     if (element.fillColor != 0x00000000) {
       canvas.drawPath(path, Paint()..color = Color(element.fillColor).withValues(alpha: element.opacity * opacity)..style = PaintingStyle.fill);
     }
-    canvas.drawPath(path, _strokePaint(element, opacity));
+    if (element.strokeAlignment == StrokeAlignment.center) {
+      canvas.drawPath(path, _strokePaint(element, opacity));
+    } else {
+      canvas.save();
+      canvas.clipPath(
+        path,
+        clipOp: element.strokeAlignment == StrokeAlignment.inside
+            ? ClipOp.intersect
+            : ClipOp.difference,
+      );
+      canvas.drawPath(
+        path,
+        _strokePaint(element, opacity)..strokeWidth = element.strokeWidth * 2,
+      );
+      canvas.restore();
+    }
   }
 
   void _roughPolygon(Path path, List<Offset> corners, DrawingElement element) {
