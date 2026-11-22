@@ -495,6 +495,9 @@ class CanvasEditorController extends ChangeNotifier {
     }
 
     if (_isMoving && _gestureOriginals.isNotEmpty) {
+      if (worldPosition.x == start.x && worldPosition.y == start.y) {
+        return;
+      }
       final delta = _snappedMoveDelta(
           worldPosition.x - start.x, worldPosition.y - start.y);
       for (final original in _gestureOriginals) {
