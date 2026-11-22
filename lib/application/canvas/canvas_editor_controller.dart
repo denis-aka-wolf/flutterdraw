@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/geometry/viewport_transform.dart';
 import '../../domain/document/draw_document.dart';
+import '../../domain/document/document_asset.dart';
 import '../../domain/elements/drawing_element.dart';
 import 'canvas_tool.dart';
 
@@ -161,6 +162,28 @@ class CanvasEditorController extends ChangeNotifier {
       roughness: 0,
     );
     _document = _document.addElement(element);
+    _selectedIds..clear()..add(element.id);
+    _recordHistory(before);
+    notifyListeners();
+  }
+
+  void addImage(DocumentAsset asset, Point2 position, {double width = 320, double height = 240}) {
+    final before = _document;
+    _idCounter++;
+    final element = DrawingElement(
+      id: 'element-$_idCounter',
+      type: DrawingElementType.image,
+      x: position.x,
+      y: position.y,
+      width: width,
+      height: height,
+      seed: _idCounter,
+      assetId: asset.id,
+      roughness: 0,
+      strokeOpacity: 1,
+      fillOpacity: 1,
+    );
+    _document = _document.addAsset(asset).addElement(element);
     _selectedIds..clear()..add(element.id);
     _recordHistory(before);
     notifyListeners();
