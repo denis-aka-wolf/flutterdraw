@@ -19,19 +19,19 @@ class DocumentExport {
     var right = double.negativeInfinity;
     var bottom = double.negativeInfinity;
     for (final element in document.elements) {
-      left = math.min(left, element.left);
-      top = math.min(top, element.top);
-      right = math.max(right, element.right);
-      bottom = math.max(bottom, element.bottom);
+      left = math.min(left, element.left).toDouble();
+      top = math.min(top, element.top).toDouble();
+      right = math.max(right, element.right).toDouble();
+      bottom = math.max(bottom, element.bottom).toDouble();
       for (final point in element.points) {
-        left = math.min(left, point.x);
-        top = math.min(top, point.y);
-        right = math.max(right, point.x);
-        bottom = math.max(bottom, point.y);
+        left = math.min(left, point.x).toDouble();
+        top = math.min(top, point.y).toDouble();
+        right = math.max(right, point.x).toDouble();
+        bottom = math.max(bottom, point.y).toDouble();
       }
     }
     final stroke = document.elements.fold<double>(
-      1, (value, element) => math.max(value, element.strokeWidth),
+      1, (value, element) => math.max(value, element.strokeWidth).toDouble(),
     );
     return Rect.fromLTRB(left, top, right, bottom).inflate(stroke + padding);
   }
@@ -86,7 +86,7 @@ class DocumentExport {
               final a = e.points[e.points.length - 2];
               final b = e.points.last;
               final angle = math.atan2(b.y - a.y, b.x - a.x);
-              final length = math.max(10.0, e.strokeWidth * 4);
+              final length = math.max(10.0, e.strokeWidth * 4).toDouble();
               final ax = b.x - length * math.cos(angle - math.pi / 6);
               final ay = b.y - length * math.sin(angle - math.pi / 6);
               final bx = b.x - length * math.cos(angle + math.pi / 6);
@@ -125,7 +125,7 @@ class DocumentExport {
         textDirection: TextDirection.ltr,
         textAlign: e.textAlign == 'center' ? TextAlign.center :
           e.textAlign == 'right' ? TextAlign.right : TextAlign.left,
-      )..layout(maxWidth: math.max(40, e.width));
+      )..layout(maxWidth: math.max(40.0, e.width));
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(e.x, e.y, e.width, e.height));
       painter.paint(canvas, Offset(e.x, e.y));
