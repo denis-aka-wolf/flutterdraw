@@ -8,6 +8,7 @@ import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
 import '../../../core/geometry/viewport_transform.dart';
 import '../../../domain/elements/drawing_element.dart';
+import '../../../domain/document/document_asset.dart';
 
 class CanvasViewport extends StatefulWidget {
   const CanvasViewport({required this.controller, super.key});
@@ -460,6 +461,7 @@ class _CanvasPainter extends CustomPainter {
     required this.backgroundColor,
     required this.dotColor,
     required this.elements,
+    required this.assets,
     required this.preview,
     required this.selection,
     required this.showResizeHandles,
@@ -473,6 +475,7 @@ class _CanvasPainter extends CustomPainter {
   final Color backgroundColor;
   final Color dotColor;
   final List<DrawingElement> elements;
+  final Map<String, DocumentAsset> assets;
   final DrawingElement? preview;
   final SelectionBounds? selection;
   final bool showResizeHandles;
@@ -537,6 +540,7 @@ class _CanvasPainter extends CustomPainter {
     DrawingElement element, {
     double opacity = 1,
   }) {
+    if (element.type == DrawingElementType.image) return;
     if (element.type == DrawingElementType.text) {
       if (element.id == editingTextId) return;
       final painter = TextPainter(
@@ -596,6 +600,7 @@ class _CanvasPainter extends CustomPainter {
       case DrawingElementType.arrow:
       case DrawingElementType.freehand:
       case DrawingElementType.text:
+      case DrawingElementType.image:
         break;
     }
     path.close();
