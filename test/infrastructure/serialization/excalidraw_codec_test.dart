@@ -37,7 +37,9 @@ void main() {
       expect(document.elements[0].fillOpacity, 0.75);
       expect(document.elements[0].extraData['flutterdrawGroupId'], 'group-1');
       expect(document.elements[1].points, const [
-        Point2(100, 200), Point2(110, 220), Point2(130, 205),
+        Point2(100, 200),
+        Point2(110, 220),
+        Point2(130, 205),
       ]);
       expect(document.elements[2].text, 'Hello');
       expect(document.elements[2].fontFamily, 'Arial');
@@ -60,7 +62,8 @@ void main() {
       }
       ''';
       final imported = codec.decode(source);
-      final json = jsonDecode(codec.encode(imported, pretty: false)) as Map<String, dynamic>;
+      final json = jsonDecode(codec.encode(imported, pretty: false))
+          as Map<String, dynamic>;
       final elements = json['elements'] as List;
       expect(json['customRoot'], {'kept': true});
       expect(json['source'], 'external-tool');
@@ -73,8 +76,13 @@ void main() {
     test('exports native elements to Excalidraw JSON', () {
       final document = DrawDocument(elements: [
         DrawingElement(
-          id: 'arrow-1', type: DrawingElementType.arrow,
-          x: 10, y: 20, width: 40, height: 30, seed: 5,
+          id: 'arrow-1',
+          type: DrawingElementType.arrow,
+          x: 10,
+          y: 20,
+          width: 40,
+          height: 30,
+          seed: 5,
           points: const [Point2(10, 20), Point2(50, 50)],
           strokeColor: 0xFF2563EB,
           strokeAlignment: StrokeAlignment.inside,
@@ -82,11 +90,15 @@ void main() {
           fillOpacity: 0.8,
         ),
       ]);
-      final json = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
+      final json = jsonDecode(codec.encode(document, pretty: false))
+          as Map<String, dynamic>;
       final element = (json['elements'] as List).single as Map<String, dynamic>;
       expect(json['type'], 'excalidraw');
       expect(element['type'], 'arrow');
-      expect(element['points'], [[0, 0], [40, 30]]);
+      expect(element['points'], [
+        [0, 0],
+        [40, 30]
+      ]);
       expect(element['strokeColor'], '#2563eb');
       expect(element['flutterdrawStrokeAlignment'], 'inside');
       expect(element['flutterdrawStrokeOpacity'], 35);
@@ -115,8 +127,10 @@ void main() {
       expect(asset.bytes, [0, 1, 2, 255]);
       expect(asset.extraData['created'], 123);
 
-      final exported = jsonDecode(codec.encode(imported, pretty: false)) as Map<String, dynamic>;
-      expect(exported['files']['asset-1']['dataURL'], 'data:image/png;base64,AAEC/w==');
+      final exported = jsonDecode(codec.encode(imported, pretty: false))
+          as Map<String, dynamic>;
+      expect(exported['files']['asset-1']['dataURL'],
+          'data:image/png;base64,AAEC/w==');
     });
 
     test('exports native embedded assets to Excalidraw file records', () {
@@ -128,9 +142,11 @@ void main() {
         ),
       });
 
-      final exported = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
+      final exported = jsonDecode(codec.encode(document, pretty: false))
+          as Map<String, dynamic>;
       expect(exported['files']['asset-native']['mimeType'], 'image/jpeg');
-      expect(exported['files']['asset-native']['dataURL'], 'data:image/jpeg;base64,BAUG');
+      expect(exported['files']['asset-native']['dataURL'],
+          'data:image/jpeg;base64,BAUG');
     });
 
     test('round-trips an image element and its embedded file', () {
@@ -156,11 +172,14 @@ void main() {
         },
       );
 
-      final encoded = jsonDecode(codec.encode(document, pretty: false)) as Map<String, dynamic>;
-      final element = (encoded['elements'] as List).single as Map<String, dynamic>;
+      final encoded = jsonDecode(codec.encode(document, pretty: false))
+          as Map<String, dynamic>;
+      final element =
+          (encoded['elements'] as List).single as Map<String, dynamic>;
       expect(element['type'], 'image');
       expect(element['fileId'], 'asset-1');
-      expect(encoded['files']['asset-1']['dataURL'], 'data:image/png;base64,AAEC/w==');
+      expect(encoded['files']['asset-1']['dataURL'],
+          'data:image/png;base64,AAEC/w==');
 
       final restored = codec.decode(jsonEncode(encoded));
       expect(restored.elements.single.type, DrawingElementType.image);
@@ -169,7 +188,8 @@ void main() {
     });
 
     test('rejects another JSON format', () {
-      expect(() => codec.decode('{"type":"other","elements":[]}'), throwsFormatException);
+      expect(() => codec.decode('{"type":"other","elements":[]}'),
+          throwsFormatException);
     });
   });
 }

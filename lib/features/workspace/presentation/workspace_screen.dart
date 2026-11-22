@@ -68,7 +68,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       return;
     }
     if (mounted) {
-      setState(() => _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено');
+      setState(() =>
+          _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено');
     }
     _autosaveTimer?.cancel();
     _autosaveTimer = Timer(const Duration(milliseconds: 700), _writeAutosave);
@@ -81,15 +82,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_autosaveKey, jsonEncode({
-      'title': _documentTitle,
-      'document': jsonDecode(content),
-    }));
+    await prefs.setString(
+        _autosaveKey,
+        jsonEncode({
+          'title': _documentTitle,
+          'document': jsonDecode(content),
+        }));
     _lastAutosavedContent = content;
     _lastAutosavedTitle = _documentTitle;
     if (mounted) {
-      setState(() => _saveStatus =
-          _hasUnsavedChanges ? 'Автосохранено' : 'Сохранено');
+      setState(() =>
+          _saveStatus = _hasUnsavedChanges ? 'Автосохранено' : 'Сохранено');
     }
   }
 
@@ -239,8 +242,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         withData: true,
       );
       if (result == null || result.files.isEmpty) {
-      return;
-    }
+        return;
+      }
       final file = result.files.single;
       final bytes = file.bytes;
       if (bytes == null) {
@@ -248,16 +251,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       }
       final source = utf8.decode(bytes);
       final decoded = jsonDecode(source);
-      final isNativeDocument = decoded is Map && decoded['type'] == DrawDocumentCodec.formatType;
+      final isNativeDocument =
+          decoded is Map && decoded['type'] == DrawDocumentCodec.formatType;
       final document = isNativeDocument
           ? _codec.decode(source)
           : _excalidrawCodec.decode(source);
       _controller.loadDocument(document);
       // Excalidraw imports are converted to the native model. Keep the source
       // file intact and require Save As for the first native save.
-      _documentPath = kIsWeb || !file.name.toLowerCase().endsWith('.flutterdraw')
-          ? null
-          : file.path;
+      _documentPath =
+          kIsWeb || !file.name.toLowerCase().endsWith('.flutterdraw')
+              ? null
+              : file.path;
       _savedContent = _codec.encode(document, pretty: false);
       setState(() {
         _documentTitle = file.name;
@@ -268,8 +273,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _onDocumentChanged();
     } catch (error) {
       if (!mounted) {
-      return;
-    }
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось открыть документ: $error')),
       );
@@ -454,91 +459,92 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     return Focus(
       onKeyEvent: _handleWorkspaceKeyEvent,
       child: Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            _WorkspaceHeader(
-              controller: _controller,
-              title: _documentTitle,
-              onNew: _newDocument,
-              onOpen: _openDocument,
-              onSave: _saveDocument,
-              onSaveAs: _saveDocumentAs,
-              onExportPng: _exportPng,
-              onExportSvg: _exportSvg,
-              onExportExcalidraw: _exportExcalidraw,
-              onImportImage: _importImage,
-              saveStatus: _saveStatus,
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  _ToolRail(controller: _controller, onImportImage: _importImage),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CanvasViewport(controller: _controller),
-                            const Positioned(
-                              top: 10,
-                              right: 10,
-                              child: CanvasHelpOverlay(),
-                            ),
-                          ],
+        body: SafeArea(
+          child: Column(
+            children: [
+              _WorkspaceHeader(
+                controller: _controller,
+                title: _documentTitle,
+                onNew: _newDocument,
+                onOpen: _openDocument,
+                onSave: _saveDocument,
+                onSaveAs: _saveDocumentAs,
+                onExportPng: _exportPng,
+                onExportSvg: _exportSvg,
+                onExportExcalidraw: _exportExcalidraw,
+                onImportImage: _importImage,
+                saveStatus: _saveStatus,
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    _ToolRail(
+                        controller: _controller, onImportImage: _importImage),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CanvasViewport(controller: _controller),
+                              const Positioned(
+                                top: 10,
+                                right: 10,
+                                child: CanvasHelpOverlay(),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 272,
-                    child: DefaultTabController(
-                      length: 2,
-                      child: Container(
-                        margin: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            TabBar(
-                              tabs: [
-                                Tab(
-                                  icon: Icon(Icons.tune, size: 18),
-                                  text: 'Свойства',
-                                ),
-                                Tab(
-                                  icon: Icon(Icons.layers_outlined, size: 18),
-                                  text: 'Слои',
-                                ),
-                              ],
-                            ),
-                            Expanded(
-                              child: TabBarView(
-                                children: [
-                                  _InspectorPanel(controller: _controller),
-                                  _LayersPanel(controller: _controller),
+                    SizedBox(
+                      width: 272,
+                      child: DefaultTabController(
+                        length: 2,
+                        child: Container(
+                          margin: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            children: [
+                              TabBar(
+                                tabs: [
+                                  Tab(
+                                    icon: Icon(Icons.tune, size: 18),
+                                    text: 'Свойства',
+                                  ),
+                                  Tab(
+                                    icon: Icon(Icons.layers_outlined, size: 18),
+                                    text: 'Слои',
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
+                              Expanded(
+                                child: TabBarView(
+                                  children: [
+                                    _InspectorPanel(controller: _controller),
+                                    _LayersPanel(controller: _controller),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            _StatusBar(controller: _controller),
-          ],
+              _StatusBar(controller: _controller),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -580,7 +586,8 @@ class _WorkspaceHeader extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(
-          bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.4)),
+          bottom:
+              BorderSide(color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       child: Row(
@@ -746,10 +753,14 @@ class _WorkspaceHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(tooltip: 'Новый документ', onPressed: onNew,
-            icon: const Icon(Icons.note_add_outlined)),
-          IconButton(tooltip: 'Открыть документ', onPressed: onOpen,
-            icon: const Icon(Icons.folder_open_outlined)),
+          IconButton(
+              tooltip: 'Новый документ',
+              onPressed: onNew,
+              icon: const Icon(Icons.note_add_outlined)),
+          IconButton(
+              tooltip: 'Открыть документ',
+              onPressed: onOpen,
+              icon: const Icon(Icons.folder_open_outlined)),
           FilledButton.tonalIcon(
             onPressed: onSave,
             icon: const Icon(Icons.save_outlined, size: 18),
@@ -897,9 +908,17 @@ class _InspectorPanel extends StatelessWidget {
   final CanvasEditorController controller;
 
   static const _palette = <int>[
-    0xFF252525, 0xFF6B7280, 0xFFDC2626, 0xFFEA580C,
-    0xFFD97706, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB,
-    0xFF7C3AED, 0xFFDB2777, 0xFFFFFFFF,
+    0xFF252525,
+    0xFF6B7280,
+    0xFFDC2626,
+    0xFFEA580C,
+    0xFFD97706,
+    0xFF16A34A,
+    0xFF0891B2,
+    0xFF2563EB,
+    0xFF7C3AED,
+    0xFFDB2777,
+    0xFFFFFFFF,
   ];
 
   @override
@@ -914,15 +933,17 @@ class _InspectorPanel extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
+                Text('Свойства',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 12),
                 Text('Выберите один или несколько объектов на холсте.',
-                  style: Theme.of(context).textTheme.bodySmall),
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             );
           }
           final element = selected.first;
-          final isText = selected.length == 1 && element.type == DrawingElementType.text;
+          final isText =
+              selected.length == 1 && element.type == DrawingElementType.text;
           final hasFill = selected.any((e) =>
               e.type == DrawingElementType.rectangle ||
               e.type == DrawingElementType.ellipse ||
@@ -931,15 +952,20 @@ class _InspectorPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Свойства', style: Theme.of(context).textTheme.titleMedium),
+                Text('Свойства',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 14),
                 if (element.type == DrawingElementType.image) ...[
                   _section(context, 'Размер изображения'),
                   _dimensionField(context, 'Ширина', element.width,
-                    (value) => controller.setSelectedImageSize(width: value)),
+                      (value) => controller.setSelectedImageSize(width: value)),
                   const SizedBox(height: 8),
-                  _dimensionField(context, 'Высота', element.height,
-                    (value) => controller.setSelectedImageSize(height: value)),
+                  _dimensionField(
+                      context,
+                      'Высота',
+                      element.height,
+                      (value) =>
+                          controller.setSelectedImageSize(height: value)),
                   SwitchListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -948,22 +974,28 @@ class _InspectorPanel extends StatelessWidget {
                     onChanged: controller.setImageAspectRatioLocked,
                   ),
                   const SizedBox(height: 8),
-                  _section(context, 'Непрозрачность изображения: ${(element.fillOpacity * 100).round()}%'),
+                  _section(context,
+                      'Непрозрачность изображения: ${(element.fillOpacity * 100).round()}%'),
                   Slider(
                     min: 0,
                     max: 1,
                     divisions: 20,
                     value: element.fillOpacity.clamp(0.0, 1.0).toDouble(),
-                    onChanged: (value) => controller.updateSelectedProperties(fillOpacity: value),
+                    onChanged: (value) =>
+                        controller.updateSelectedProperties(fillOpacity: value),
                   ),
                   const SizedBox(height: 8),
                 ] else ...[
-                _section(context, element.type == DrawingElementType.text ? 'Цвет текста' : 'Цвет обводки'),
-
-                _colorChoices(
-                  selectedColor: element.strokeColor,
-                  onSelected: (color) => controller.updateSelectedProperties(strokeColor: color),
-                ),
+                  _section(
+                      context,
+                      element.type == DrawingElementType.text
+                          ? 'Цвет текста'
+                          : 'Цвет обводки'),
+                  _colorChoices(
+                    selectedColor: element.strokeColor,
+                    onSelected: (color) =>
+                        controller.updateSelectedProperties(strokeColor: color),
+                  ),
                 ],
                 const SizedBox(height: 14),
                 if (hasFill) ...[
@@ -971,11 +1003,13 @@ class _InspectorPanel extends StatelessWidget {
                   _colorChoices(
                     selectedColor: element.fillColor,
                     allowNone: true,
-                    onSelected: (color) => controller.updateSelectedProperties(fillColor: color),
+                    onSelected: (color) =>
+                        controller.updateSelectedProperties(fillColor: color),
                   ),
                   const SizedBox(height: 14),
                 ],
-                if (element.type != DrawingElementType.text && element.type != DrawingElementType.image) ...[
+                if (element.type != DrawingElementType.text &&
+                    element.type != DrawingElementType.image) ...[
                   if (element.type == DrawingElementType.rectangle ||
                       element.type == DrawingElementType.ellipse ||
                       element.type == DrawingElementType.diamond) ...[
@@ -1006,30 +1040,43 @@ class _InspectorPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  _section(context, 'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
+                  _section(context,
+                      'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
                   Slider(
-                    min: 0.5, max: 12, divisions: 23,
+                    min: 0.5,
+                    max: 12,
+                    divisions: 23,
                     value: element.strokeWidth.clamp(0.5, 12).toDouble(),
-                    onChanged: (value) => controller.updateSelectedProperties(strokeWidth: value),
+                    onChanged: (value) =>
+                        controller.updateSelectedProperties(strokeWidth: value),
                   ),
                   const SizedBox(height: 8),
                 ],
                 if (element.type != DrawingElementType.image) ...[
-                _section(context, isText
-                    ? 'Непрозрачность текста: ${(element.strokeOpacity * 100).round()}%'
-                    : 'Непрозрачность обводки: ${(element.strokeOpacity * 100).round()}%'),
-                Slider(
-                  min: 0, max: 1, divisions: 20,
-                  value: element.strokeOpacity.clamp(0, 1).toDouble(),
-                  onChanged: (value) => controller.updateSelectedProperties(strokeOpacity: value),
-                ),
+                  _section(
+                      context,
+                      isText
+                          ? 'Непрозрачность текста: ${(element.strokeOpacity * 100).round()}%'
+                          : 'Непрозрачность обводки: ${(element.strokeOpacity * 100).round()}%'),
+                  Slider(
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
+                    value: element.strokeOpacity.clamp(0, 1).toDouble(),
+                    onChanged: (value) => controller.updateSelectedProperties(
+                        strokeOpacity: value),
+                  ),
                 ],
                 if (hasFill) ...[
-                  _section(context, 'Непрозрачность заливки: ${(element.fillOpacity * 100).round()}%'),
+                  _section(context,
+                      'Непрозрачность заливки: ${(element.fillOpacity * 100).round()}%'),
                   Slider(
-                    min: 0, max: 1, divisions: 20,
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
                     value: element.fillOpacity.clamp(0, 1).toDouble(),
-                    onChanged: (value) => controller.updateSelectedProperties(fillOpacity: value),
+                    onChanged: (value) =>
+                        controller.updateSelectedProperties(fillOpacity: value),
                   ),
                 ],
                 if (isText) ...[
@@ -1041,54 +1088,89 @@ class _InspectorPanel extends StatelessWidget {
                     minLines: 2,
                     maxLines: 5,
                     decoration: const InputDecoration(
-                      border: OutlineInputBorder(), isDense: true,
+                      border: OutlineInputBorder(),
+                      isDense: true,
                     ),
                     onChanged: controller.updateSelectedText,
                   ),
                   const SizedBox(height: 14),
                   _section(context, 'Шрифт'),
                   DropdownButtonFormField<String>(
-                    initialValue: const ['Roboto', 'Arial', 'Georgia', 'Courier New', 'Times New Roman'].contains(element.fontFamily) ? element.fontFamily : 'Roboto',
+                    initialValue: const [
+                      'Roboto',
+                      'Arial',
+                      'Georgia',
+                      'Courier New',
+                      'Times New Roman'
+                    ].contains(element.fontFamily)
+                        ? element.fontFamily
+                        : 'Roboto',
                     isExpanded: true,
                     decoration: const InputDecoration(
-                      border: OutlineInputBorder(), isDense: true,
+                      border: OutlineInputBorder(),
+                      isDense: true,
                     ),
                     items: const [
                       DropdownMenuItem(value: 'Roboto', child: Text('Roboto')),
                       DropdownMenuItem(value: 'Arial', child: Text('Arial')),
-                      DropdownMenuItem(value: 'Georgia', child: Text('Georgia')),
-                      DropdownMenuItem(value: 'Courier New', child: Text('Courier New')),
-                      DropdownMenuItem(value: 'Times New Roman', child: Text('Times New Roman')),
+                      DropdownMenuItem(
+                          value: 'Georgia', child: Text('Georgia')),
+                      DropdownMenuItem(
+                          value: 'Courier New', child: Text('Courier New')),
+                      DropdownMenuItem(
+                          value: 'Times New Roman',
+                          child: Text('Times New Roman')),
                     ],
                     onChanged: (value) {
-                      if (value != null) controller.updateSelectedProperties(fontFamily: value);
+                      if (value != null)
+                        controller.updateSelectedProperties(fontFamily: value);
                     },
                   ),
                   const SizedBox(height: 12),
-                  _section(context, 'Размер шрифта: ${element.fontSize.round()}'),
+                  _section(
+                      context, 'Размер шрифта: ${element.fontSize.round()}'),
                   Slider(
-                    min: 10, max: 96, divisions: 43,
+                    min: 10,
+                    max: 96,
+                    divisions: 43,
                     value: element.fontSize.clamp(10, 96).toDouble(),
                     onChanged: controller.setSelectedTextFontSize,
                   ),
                   _section(context, 'Выравнивание'),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(value: 'left', icon: Icon(Icons.format_align_left)),
-                      ButtonSegment(value: 'center', icon: Icon(Icons.format_align_center)),
-                      ButtonSegment(value: 'right', icon: Icon(Icons.format_align_right)),
+                      ButtonSegment(
+                          value: 'left', icon: Icon(Icons.format_align_left)),
+                      ButtonSegment(
+                          value: 'center',
+                          icon: Icon(Icons.format_align_center)),
+                      ButtonSegment(
+                          value: 'right', icon: Icon(Icons.format_align_right)),
                     ],
-                    selected: {const ['left', 'center', 'right'].contains(element.textAlign) ? element.textAlign : 'left'},
-                    onSelectionChanged: (values) =>
-                      controller.updateSelectedProperties(textAlign: values.first),
+                    selected: {
+                      const ['left', 'center', 'right']
+                              .contains(element.textAlign)
+                          ? element.textAlign
+                          : 'left'
+                    },
+                    onSelectionChanged: (values) => controller
+                        .updateSelectedProperties(textAlign: values.first),
                   ),
                   const SizedBox(height: 12),
                   _section(context, 'Размер текстового блока'),
-                  _dimensionField(context, 'Ширина', element.width,
-                    (value) => controller.setSelectedTextBlockSize(width: value)),
+                  _dimensionField(
+                      context,
+                      'Ширина',
+                      element.width,
+                      (value) =>
+                          controller.setSelectedTextBlockSize(width: value)),
                   const SizedBox(height: 8),
-                  _dimensionField(context, 'Высота', element.height,
-                    (value) => controller.setSelectedTextBlockSize(height: value)),
+                  _dimensionField(
+                      context,
+                      'Высота',
+                      element.height,
+                      (value) =>
+                          controller.setSelectedTextBlockSize(height: value)),
                 ],
               ],
             ),
@@ -1099,9 +1181,9 @@ class _InspectorPanel extends StatelessWidget {
   }
 
   Widget _section(BuildContext context, String label) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(label, style: Theme.of(context).textTheme.labelLarge),
-  );
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(label, style: Theme.of(context).textTheme.labelLarge),
+      );
 
   Widget _colorChoices({
     required int selectedColor,
@@ -1109,14 +1191,16 @@ class _InspectorPanel extends StatelessWidget {
     bool allowNone = false,
   }) {
     return Wrap(
-      spacing: 7, runSpacing: 7,
+      spacing: 7,
+      runSpacing: 7,
       children: [
         if (allowNone)
           InkWell(
             onTap: () => onSelected(0x00000000),
             borderRadius: BorderRadius.circular(18),
             child: Container(
-              width: 26, height: 26,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -1132,7 +1216,8 @@ class _InspectorPanel extends StatelessWidget {
             onTap: () => onSelected(color),
             borderRadius: BorderRadius.circular(18),
             child: Container(
-              width: 26, height: 26,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 color: Color(color),
                 shape: BoxShape.circle,
@@ -1151,14 +1236,18 @@ class _InspectorPanel extends StatelessWidget {
       ValueChanged<double> onSubmitted) {
     return Row(
       children: [
-        SizedBox(width: 58, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
+        SizedBox(
+            width: 58,
+            child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
         Expanded(
           child: TextFormField(
             key: ValueKey('$label-${value.round()}'),
             initialValue: value.round().toString(),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
-              suffixText: 'px', isDense: true, border: OutlineInputBorder(),
+              suffixText: 'px',
+              isDense: true,
+              border: OutlineInputBorder(),
             ),
             onFieldSubmitted: (raw) {
               final parsed = double.tryParse(raw);
@@ -1176,7 +1265,8 @@ class _LayersPanel extends StatelessWidget {
   final CanvasEditorController controller;
 
   String _label(DrawingElement element) {
-    if (element.type == DrawingElementType.text && element.text.trim().isNotEmpty) {
+    if (element.type == DrawingElementType.text &&
+        element.text.trim().isNotEmpty) {
       final value = element.text.replaceAll('\n', ' ').trim();
       return value.length > 22 ? '${value.substring(0, 22)}…' : value;
     }
@@ -1193,15 +1283,15 @@ class _LayersPanel extends StatelessWidget {
   }
 
   IconData _icon(DrawingElementType type) => switch (type) {
-    DrawingElementType.rectangle => Icons.rectangle_outlined,
-    DrawingElementType.ellipse => Icons.circle_outlined,
-    DrawingElementType.diamond => Icons.diamond_outlined,
-    DrawingElementType.line => Icons.timeline,
-    DrawingElementType.arrow => Icons.arrow_right_alt,
-    DrawingElementType.freehand => Icons.gesture,
-    DrawingElementType.text => Icons.text_fields,
-    DrawingElementType.image => Icons.image_outlined,
-  };
+        DrawingElementType.rectangle => Icons.rectangle_outlined,
+        DrawingElementType.ellipse => Icons.circle_outlined,
+        DrawingElementType.diamond => Icons.diamond_outlined,
+        DrawingElementType.line => Icons.timeline,
+        DrawingElementType.arrow => Icons.arrow_right_alt,
+        DrawingElementType.freehand => Icons.gesture,
+        DrawingElementType.text => Icons.text_fields,
+        DrawingElementType.image => Icons.image_outlined,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -1212,47 +1302,71 @@ class _LayersPanel extends StatelessWidget {
         animation: controller,
         builder: (context, _) {
           final layers = controller.document.elements.reversed.toList();
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              const Icon(Icons.layers_outlined, size: 18),
-              const SizedBox(width: 7),
-              Expanded(child: Text('Слои', style: Theme.of(context).textTheme.titleSmall)),
-              Text('${layers.length}', style: Theme.of(context).textTheme.labelSmall),
-            ]),
-            SwitchListTile(dense: true, contentPadding: EdgeInsets.zero,
-              title: const Text('Привязка к сетке'), value: controller.snapToGrid,
-              onChanged: controller.setSnapToGrid),
-            SwitchListTile(dense: true, contentPadding: EdgeInsets.zero,
-              title: const Text('Умные направляющие'), value: controller.snapToGuides,
-              onChanged: controller.setSnapToGuides),
-            const Divider(height: 8),
-            Expanded(child: layers.isEmpty
-              ? Center(child: Text('Нет объектов', style: Theme.of(context).textTheme.bodySmall))
-              : ReorderableListView.builder(
-                  buildDefaultDragHandles: true,
-                  itemCount: layers.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    final reordered = [...layers];
-                    final item = reordered.removeAt(oldIndex);
-                    reordered.insert(newIndex, item);
-                    controller.reorderLayers(reordered.map((e) => e.id).toList());
-                  },
-                  itemBuilder: (context, index) {
-                    final element = layers[index];
-                    final selected = controller.selectedElementIds.contains(element.id);
-                    final groupId = element.extraData['flutterdrawGroupId'];
-                    return ListTile(
-                      key: ValueKey(element.id), dense: true,
-                      visualDensity: VisualDensity.compact,
-                      selected: selected, selectedTileColor: colors.secondaryContainer,
-                      leading: Icon(_icon(element.type), size: 17),
-                      title: Text(_label(element), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: groupId is String ? const Text('Группа') : null,
-                      onTap: () => controller.selectElementById(element.id),
-                    );
-                  },
-                )),
-          ]);
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.layers_outlined, size: 18),
+                  const SizedBox(width: 7),
+                  Expanded(
+                      child: Text('Слои',
+                          style: Theme.of(context).textTheme.titleSmall)),
+                  Text('${layers.length}',
+                      style: Theme.of(context).textTheme.labelSmall),
+                ]),
+                SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Привязка к сетке'),
+                    value: controller.snapToGrid,
+                    onChanged: controller.setSnapToGrid),
+                SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Умные направляющие'),
+                    value: controller.snapToGuides,
+                    onChanged: controller.setSnapToGuides),
+                const Divider(height: 8),
+                Expanded(
+                    child: layers.isEmpty
+                        ? Center(
+                            child: Text('Нет объектов',
+                                style: Theme.of(context).textTheme.bodySmall))
+                        : ReorderableListView.builder(
+                            buildDefaultDragHandles: true,
+                            itemCount: layers.length,
+                            onReorderItem: (oldIndex, newIndex) {
+                              final reordered = [...layers];
+                              final item = reordered.removeAt(oldIndex);
+                              reordered.insert(newIndex, item);
+                              controller.reorderLayers(
+                                  reordered.map((e) => e.id).toList());
+                            },
+                            itemBuilder: (context, index) {
+                              final element = layers[index];
+                              final selected = controller.selectedElementIds
+                                  .contains(element.id);
+                              final groupId =
+                                  element.extraData['flutterdrawGroupId'];
+                              return ListTile(
+                                key: ValueKey(element.id),
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                selected: selected,
+                                selectedTileColor: colors.secondaryContainer,
+                                leading: Icon(_icon(element.type), size: 17),
+                                title: Text(_label(element),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                                subtitle: groupId is String
+                                    ? const Text('Группа')
+                                    : null,
+                                onTap: () =>
+                                    controller.selectElementById(element.id),
+                              );
+                            },
+                          )),
+              ]);
         },
       ),
     );

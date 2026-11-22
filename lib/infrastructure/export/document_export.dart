@@ -32,12 +32,14 @@ class DocumentExport {
       }
     }
     final stroke = document.elements.fold<double>(
-      1, (value, element) => math.max(value, element.strokeWidth).toDouble(),
+      1,
+      (value, element) => math.max(value, element.strokeWidth).toDouble(),
     );
     return Rect.fromLTRB(left, top, right, bottom).inflate(stroke + padding);
   }
 
-  static Future<Uint8List> png(DrawDocument document, {double pixelRatio = 2}) async {
+  static Future<Uint8List> png(DrawDocument document,
+      {double pixelRatio = 2}) async {
     final area = bounds(document);
     final width = math.max(1, (area.width * pixelRatio).ceil()).toInt();
     final height = math.max(1, (area.height * pixelRatio).ceil()).toInt();
@@ -53,13 +55,15 @@ class DocumentExport {
     ui.Image? renderedImage;
     try {
       for (final element in document.elements) {
-        if (element.type != DrawingElementType.image || element.assetId == null ||
+        if (element.type != DrawingElementType.image ||
+            element.assetId == null ||
             decodedAssets.containsKey(element.assetId)) {
           continue;
         }
         final asset = document.assets[element.assetId];
         if (asset == null) continue;
-        final codec = await ui.instantiateImageCodec(Uint8List.fromList(asset.bytes));
+        final codec =
+            await ui.instantiateImageCodec(Uint8List.fromList(asset.bytes));
         try {
           final frame = await codec.getNextFrame();
           decodedAssets[element.assetId!] = frame.image;
@@ -71,12 +75,14 @@ class DocumentExport {
         _paintElement(
           canvas,
           element,
-          image: element.assetId == null ? null : decodedAssets[element.assetId],
+          image:
+              element.assetId == null ? null : decodedAssets[element.assetId],
         );
       }
       picture = recorder.endRecording();
       renderedImage = await picture.toImage(width, height);
-      final data = await renderedImage.toByteData(format: ui.ImageByteFormat.png);
+      final data =
+          await renderedImage.toByteData(format: ui.ImageByteFormat.png);
       if (data == null) throw StateError('Не удалось сформировать PNG.');
       return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     } finally {
@@ -96,20 +102,28 @@ class DocumentExport {
     for (final e in document.elements) {
       final stroke = _hex(e.strokeColor);
       final fill = e.fillColor == 0 ? 'none' : _hex(e.fillColor);
-      final common = 'stroke="$stroke" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${e.strokeOpacity}"';
+      final common =
+          'stroke="$stroke" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${e.strokeOpacity}"';
       switch (e.type) {
         case DrawingElementType.rectangle:
-          out.write('<rect x="${e.left}" y="${e.top}" width="${e.width.abs()}" height="${e.height.abs()}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
+          out.write(
+              '<rect x="${e.left}" y="${e.top}" width="${e.width.abs()}" height="${e.height.abs()}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.ellipse:
-          out.write('<ellipse cx="${(e.left + e.right) / 2}" cy="${(e.top + e.bottom) / 2}" rx="${e.width.abs() / 2}" ry="${e.height.abs() / 2}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
+          out.write(
+              '<ellipse cx="${(e.left + e.right) / 2}" cy="${(e.top + e.bottom) / 2}" rx="${e.width.abs() / 2}" ry="${e.height.abs() / 2}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.diamond:
-          out.write('<path d="M ${(e.left + e.right) / 2} ${e.top} L ${e.right} ${(e.top + e.bottom) / 2} L ${(e.left + e.right) / 2} ${e.bottom} L ${e.left} ${(e.top + e.bottom) / 2} Z" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
+          out.write(
+              '<path d="M ${(e.left + e.right) / 2} ${e.top} L ${e.right} ${(e.top + e.bottom) / 2} L ${(e.left + e.right) / 2} ${e.bottom} L ${e.left} ${(e.top + e.bottom) / 2} Z" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.line:
         case DrawingElementType.arrow:
         case DrawingElementType.freehand:
           if (e.points.isNotEmpty) {
-            final d = e.points.asMap().entries.map((entry) =>
-              '${entry.key == 0 ? 'M' : 'L'} ${entry.value.x} ${entry.value.y}').join(' ');
+            final d = e.points
+                .asMap()
+                .entries
+                .map((entry) =>
+                    '${entry.key == 0 ? 'M' : 'L'} ${entry.value.x} ${entry.value.y}')
+                .join(' ');
             out.write('<path d="$d" fill="none" $common/>');
             if (e.type == DrawingElementType.arrow && e.points.length >= 2) {
               final a = e.points[e.points.length - 2];
@@ -120,22 +134,34 @@ class DocumentExport {
               final ay = b.y - length * math.sin(angle - math.pi / 6);
               final bx = b.x - length * math.cos(angle + math.pi / 6);
               final by = b.y - length * math.sin(angle + math.pi / 6);
-              out.write('<path d="M $ax $ay L ${b.x} ${b.y} L $bx $by" fill="none" $common/>');
+              out.write(
+                  '<path d="M $ax $ay L ${b.x} ${b.y} L $bx $by" fill="none" $common/>');
             }
           }
         case DrawingElementType.image:
           final asset = e.assetId == null ? null : document.assets[e.assetId];
           if (asset != null) {
             final data = base64Encode(asset.bytes);
-            out.write('<image href="data:${asset.mimeType};base64,$data" x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" opacity="${e.fillOpacity}"/>');
+            out.write(
+                '<image href="data:${asset.mimeType};base64,$data" x="${e.x}" y="${e.y}" width="${e.width}" height="${e.height}" opacity="${e.fillOpacity}"/>');
           }
         case DrawingElementType.text:
           final lines = e.text.split('\n');
-          final anchor = e.textAlign == 'center' ? 'middle' : e.textAlign == 'right' ? 'end' : 'start';
-          final x = e.textAlign == 'center' ? e.x + e.width / 2 : e.textAlign == 'right' ? e.x + e.width : e.x;
-          out.write('<text x="$x" y="${e.y + e.fontSize}" fill="$stroke" font-family="${_xml(e.fontFamily)}" font-size="${e.fontSize}" text-anchor="$anchor" opacity="${e.strokeOpacity}">');
+          final anchor = e.textAlign == 'center'
+              ? 'middle'
+              : e.textAlign == 'right'
+                  ? 'end'
+                  : 'start';
+          final x = e.textAlign == 'center'
+              ? e.x + e.width / 2
+              : e.textAlign == 'right'
+                  ? e.x + e.width
+                  : e.x;
+          out.write(
+              '<text x="$x" y="${e.y + e.fontSize}" fill="$stroke" font-family="${_xml(e.fontFamily)}" font-size="${e.fontSize}" text-anchor="$anchor" opacity="${e.strokeOpacity}">');
           for (var i = 0; i < lines.length; i++) {
-            out.write('<tspan x="$x" dy="${i == 0 ? 0 : e.fontSize * 1.2}">${_xml(lines[i])}</tspan>');
+            out.write(
+                '<tspan x="$x" dy="${i == 0 ? 0 : e.fontSize * 1.2}">${_xml(lines[i])}</tspan>');
           }
           out.write('</text>');
       }
@@ -144,7 +170,8 @@ class DocumentExport {
     return out.toString();
   }
 
-  static void _paintElement(Canvas canvas, DrawingElement e, {ui.Image? image}) {
+  static void _paintElement(Canvas canvas, DrawingElement e,
+      {ui.Image? image}) {
     if (e.type == DrawingElementType.image) {
       if (image != null) {
         canvas.drawImageRect(
@@ -164,13 +191,20 @@ class DocumentExport {
       ..strokeJoin = StrokeJoin.round;
     if (e.type == DrawingElementType.text) {
       final painter = TextPainter(
-        text: TextSpan(text: e.text, style: TextStyle(
-          color: Color(e.strokeColor).withValues(alpha: e.strokeOpacity),
-          fontSize: e.fontSize, fontFamily: e.fontFamily, height: 1.2,
-        )),
+        text: TextSpan(
+            text: e.text,
+            style: TextStyle(
+              color: Color(e.strokeColor).withValues(alpha: e.strokeOpacity),
+              fontSize: e.fontSize,
+              fontFamily: e.fontFamily,
+              height: 1.2,
+            )),
         textDirection: TextDirection.ltr,
-        textAlign: e.textAlign == 'center' ? TextAlign.center :
-          e.textAlign == 'right' ? TextAlign.right : TextAlign.left,
+        textAlign: e.textAlign == 'center'
+            ? TextAlign.center
+            : e.textAlign == 'right'
+                ? TextAlign.right
+                : TextAlign.left,
       )..layout(maxWidth: math.max(40.0, e.width));
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(e.x, e.y, e.width, e.height));
@@ -178,7 +212,8 @@ class DocumentExport {
       canvas.restore();
       return;
     }
-    if (e.type == DrawingElementType.line || e.type == DrawingElementType.arrow ||
+    if (e.type == DrawingElementType.line ||
+        e.type == DrawingElementType.arrow ||
         e.type == DrawingElementType.freehand) {
       _paintStroke(canvas, e, stroke);
       return;
@@ -187,25 +222,33 @@ class DocumentExport {
     final path = Path();
     switch (e.type) {
       case DrawingElementType.rectangle:
-        _roughPolygon(path, [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft], e);
+        _roughPolygon(
+            path,
+            [rect.topLeft, rect.topRight, rect.bottomRight, rect.bottomLeft],
+            e);
         path.close();
       case DrawingElementType.ellipse:
         _roughEllipse(path, rect, e);
       case DrawingElementType.diamond:
-        _roughPolygon(path, [
-          rect.topCenter,
-          rect.centerRight,
-          rect.bottomCenter,
-          rect.centerLeft,
-        ], e);
+        _roughPolygon(
+            path,
+            [
+              rect.topCenter,
+              rect.centerRight,
+              rect.bottomCenter,
+              rect.centerLeft,
+            ],
+            e);
         path.close();
       default:
         return;
     }
     if (e.fillColor != 0) {
-      canvas.drawPath(path, Paint()
-        ..color = Color(e.fillColor).withValues(alpha: e.fillOpacity)
-        ..style = PaintingStyle.fill);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = Color(e.fillColor).withValues(alpha: e.fillOpacity)
+            ..style = PaintingStyle.fill);
     }
     canvas.drawPath(path, stroke);
   }
@@ -247,14 +290,19 @@ class DocumentExport {
       final jitter = (random.nextDouble() * 2 - 1) * e.roughness;
       final x = center.dx + (rx + jitter) * math.cos(angle);
       final y = center.dy + (ry + jitter) * math.sin(angle);
-      if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
   }
 
   static void _paintStroke(Canvas canvas, DrawingElement e, Paint paint) {
     if (e.points.isEmpty) return;
     final path = Path();
-    if ((e.type == DrawingElementType.line || e.type == DrawingElementType.arrow) &&
+    if ((e.type == DrawingElementType.line ||
+            e.type == DrawingElementType.arrow) &&
         e.points.length == 2) {
       final start = e.points.first;
       final end = e.points.last;
@@ -297,9 +345,12 @@ class DocumentExport {
     }
   }
 
-  static String _hex(int color) => '#${(color & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+  static String _hex(int color) =>
+      '#${(color & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
   static String _xml(String value) => value
-      .replaceAll('&', '&amp;').replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;').replaceAll('"', '&quot;')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
       .replaceAll("'", '&apos;');
 }

@@ -43,7 +43,8 @@ class DrawDocumentCodec {
     }
 
     if (decoded is! Map<String, dynamic>) {
-      throw const FormatException('Корень документа должен быть JSON-объектом.');
+      throw const FormatException(
+          'Корень документа должен быть JSON-объектом.');
     }
 
     if (decoded['type'] != formatType) {
@@ -69,7 +70,8 @@ class DrawDocumentCodec {
     for (var index = 0; index < rawElements.length; index++) {
       final raw = rawElements[index];
       if (raw is! Map<String, dynamic>) {
-        throw FormatException('Элемент с индексом $index должен быть объектом.');
+        throw FormatException(
+            'Элемент с индексом $index должен быть объектом.');
       }
       elements.add(_decodeElement(raw, index));
     }
@@ -88,13 +90,15 @@ class DrawDocumentCodec {
         final mimeType = assetData['mimeType'];
         final encodedBytes = assetData['data'];
         if (mimeType is! String || encodedBytes is! String) {
-          throw FormatException('Ресурс ${entry.key} не содержит mimeType или data.');
+          throw FormatException(
+              'Ресурс ${entry.key} не содержит mimeType или data.');
         }
         final assetId = entry.key as String;
         assets[assetId] = DocumentAsset(
           id: assetId,
           mimeType: mimeType,
-          name: assetData['name'] is String ? assetData['name'] as String : null,
+          name:
+              assetData['name'] is String ? assetData['name'] as String : null,
           bytes: base64Decode(encodedBytes),
           extraData: {
             for (final field in assetData.entries)
@@ -137,8 +141,10 @@ class DrawDocumentCodec {
       'fillOpacity': element.fillOpacity,
       'fillColor': element.fillColor,
       if (element.assetId != null) 'assetId': element.assetId,
-      if (element.type == DrawingElementType.text) 'fontFamily': element.fontFamily,
-      if (element.type == DrawingElementType.text) 'textAlign': element.textAlign,
+      if (element.type == DrawingElementType.text)
+        'fontFamily': element.fontFamily,
+      if (element.type == DrawingElementType.text)
+        'textAlign': element.textAlign,
       if (element.type == DrawingElementType.text) 'text': element.text,
       if (element.type == DrawingElementType.text) 'fontSize': element.fontSize,
     };
@@ -157,7 +163,8 @@ class DrawDocumentCodec {
 
     final rawPoints = data['points'];
     if (rawPoints is! List) {
-      throw FormatException('Поле points элемента $index должно быть массивом.');
+      throw FormatException(
+          'Поле points элемента $index должно быть массивом.');
     }
 
     final points = <Point2>[];
@@ -211,12 +218,21 @@ class DrawDocumentCodec {
         orElse: () => StrokeAlignment.center,
       ),
       roughness: _optionalDouble(data, 'roughness', 1),
-      strokeOpacity: _optionalDouble(data, 'strokeOpacity', _optionalDouble(data, 'opacity', 1)).clamp(0.0, 1.0).toDouble(),
-      fillOpacity: _optionalDouble(data, 'fillOpacity', _optionalDouble(data, 'opacity', 1)).clamp(0.0, 1.0).toDouble(),
+      strokeOpacity: _optionalDouble(
+              data, 'strokeOpacity', _optionalDouble(data, 'opacity', 1))
+          .clamp(0.0, 1.0)
+          .toDouble(),
+      fillOpacity: _optionalDouble(
+              data, 'fillOpacity', _optionalDouble(data, 'opacity', 1))
+          .clamp(0.0, 1.0)
+          .toDouble(),
       fillColor: _optionalInt(data, 'fillColor', 0x00000000),
       assetId: data['assetId'] is String ? data['assetId'] as String : null,
-      fontFamily: data['fontFamily'] is String ? data['fontFamily'] as String : 'Roboto',
-      textAlign: data['textAlign'] is String ? data['textAlign'] as String : 'left',
+      fontFamily: data['fontFamily'] is String
+          ? data['fontFamily'] as String
+          : 'Roboto',
+      textAlign:
+          data['textAlign'] is String ? data['textAlign'] as String : 'left',
       text: data['text'] is String ? data['text'] as String : '',
       fontSize: _optionalDouble(data, 'fontSize', 24),
       extraData: {
@@ -253,7 +269,8 @@ class DrawDocumentCodec {
   int _optionalInt(Map<String, dynamic> data, String key, int fallback) {
     final value = data[key];
     if (value == null) return fallback;
-    if (value is! int) throw FormatException('Поле $key должно быть целым числом.');
+    if (value is! int)
+      throw FormatException('Поле $key должно быть целым числом.');
     return value;
   }
 

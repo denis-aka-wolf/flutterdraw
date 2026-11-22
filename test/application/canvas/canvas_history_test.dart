@@ -8,7 +8,8 @@ import 'package:flutterdraw/domain/elements/drawing_element.dart';
 void main() {
   group('Canvas document history', () {
     test('undoes and redoes a completed drawing gesture as one action', () {
-      final controller = CanvasEditorController()..setActiveTool(CanvasTool.rectangle);
+      final controller = CanvasEditorController()
+        ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(10, 10));
       controller.pointerMove(const Point2(100, 80));
       controller.pointerUp(const Point2(100, 80));
@@ -23,7 +24,8 @@ void main() {
     });
 
     test('groups moving a selected element into one history entry', () {
-      final controller = CanvasEditorController()..setActiveTool(CanvasTool.rectangle);
+      final controller = CanvasEditorController()
+        ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(10, 10));
       controller.pointerUp(const Point2(100, 80));
       final original = controller.document.elements.single;
@@ -74,7 +76,11 @@ void main() {
         DrawingElement(
           id: 'element-12',
           type: DrawingElementType.rectangle,
-          x: 0, y: 0, width: 40, height: 30, seed: 12,
+          x: 0,
+          y: 0,
+          width: 40,
+          height: 30,
+          seed: 12,
         ),
       ]));
       expect(controller.canUndo, isFalse);
@@ -87,7 +93,8 @@ void main() {
     });
 
     test('cancelled gestures do not enter history', () {
-      final controller = CanvasEditorController()..setActiveTool(CanvasTool.rectangle);
+      final controller = CanvasEditorController()
+        ..setActiveTool(CanvasTool.rectangle);
       controller.pointerDown(const Point2(0, 0));
       controller.pointerMove(const Point2(50, 50));
       controller.cancelGesture();

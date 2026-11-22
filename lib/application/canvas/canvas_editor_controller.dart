@@ -8,7 +8,14 @@ import '../../domain/document/document_asset.dart';
 import '../../domain/elements/drawing_element.dart';
 import 'canvas_tool.dart';
 
-enum ElementAlignment { left, centerHorizontal, right, top, centerVertical, bottom }
+enum ElementAlignment {
+  left,
+  centerHorizontal,
+  right,
+  top,
+  centerVertical,
+  bottom
+}
 
 enum ResizeHandle {
   topLeft,
@@ -66,12 +73,14 @@ class CanvasEditorController extends ChangeNotifier {
   List<double> get alignmentGuidesX => List.unmodifiable(_alignmentGuidesX);
   List<double> get alignmentGuidesY => List.unmodifiable(_alignmentGuidesY);
   bool get canGroupSelection => _selectedIds.length >= 2;
-  bool get canUngroupSelection => selectedElements.any((e) => e.extraData['flutterdrawGroupId'] is String);
+  bool get canUngroupSelection =>
+      selectedElements.any((e) => e.extraData['flutterdrawGroupId'] is String);
   bool get canRedo => _historyIndex < _history.length - 1;
   CanvasTool get activeTool => _activeTool;
   DrawingElement? get drawingPreview => _drawingPreview;
   Set<String> get selectedElementIds => Set.unmodifiable(_selectedIds);
-  bool get isMarqueeSelecting => _gestureStart != null &&
+  bool get isMarqueeSelecting =>
+      _gestureStart != null &&
       _marqueeEnd != null &&
       !_isMoving &&
       _activeResizeHandle == null &&
@@ -115,7 +124,9 @@ class CanvasEditorController extends ChangeNotifier {
 
   void loadDocument(DrawDocument document) {
     _document = document;
-    _history..clear()..add(document);
+    _history
+      ..clear()
+      ..add(document);
     _historyIndex = 0;
     _lastHistoryMergeKey = null;
     _selectedIds.clear();
@@ -130,7 +141,8 @@ class CanvasEditorController extends ChangeNotifier {
       if (groupId is String) {
         final groupMatch = RegExp(r'^group-([0-9]+)$').firstMatch(groupId);
         final groupNumber = int.tryParse(groupMatch?.group(1) ?? '');
-        if (groupNumber != null && groupNumber > _groupCounter) _groupCounter = groupNumber;
+        if (groupNumber != null && groupNumber > _groupCounter)
+          _groupCounter = groupNumber;
       }
     }
     _activeTool = CanvasTool.select;
@@ -145,7 +157,8 @@ class CanvasEditorController extends ChangeNotifier {
     final content = value.trim();
     if (content.isEmpty) return;
     _idCounter++;
-    final width = math.max(160.0, math.min(520.0, content.length * fontSize * 0.62));
+    final width =
+        math.max(160.0, math.min(520.0, content.length * fontSize * 0.62));
     final lines = content.split('\n').length;
     final height = math.max(fontSize * 1.5, lines * fontSize * 1.45);
     final element = DrawingElement(
@@ -162,12 +175,15 @@ class CanvasEditorController extends ChangeNotifier {
       roughness: 0,
     );
     _document = _document.addElement(element);
-    _selectedIds..clear()..add(element.id);
+    _selectedIds
+      ..clear()
+      ..add(element.id);
     _recordHistory(before);
     notifyListeners();
   }
 
-  void addImage(DocumentAsset asset, Point2 position, {double width = 320, double height = 240}) {
+  void addImage(DocumentAsset asset, Point2 position,
+      {double width = 320, double height = 240}) {
     final before = _document;
     _idCounter++;
     final element = DrawingElement(
@@ -184,14 +200,17 @@ class CanvasEditorController extends ChangeNotifier {
       fillOpacity: 1,
     );
     _document = _document.addAsset(asset).addElement(element);
-    _selectedIds..clear()..add(element.id);
+    _selectedIds
+      ..clear()
+      ..add(element.id);
     _recordHistory(before);
     notifyListeners();
   }
 
   void updateSelectedText(String value) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+      return;
     final before = _document;
     final original = selected.single;
     final content = value;
@@ -205,15 +224,30 @@ class CanvasEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, StrokeAlignment? strokeAlignment, double? opacity, double? strokeOpacity, double? fillOpacity, String? fontFamily, String? textAlign}) {
+  void updateSelectedProperties(
+      {int? strokeColor,
+      int? fillColor,
+      double? strokeWidth,
+      StrokeAlignment? strokeAlignment,
+      double? opacity,
+      double? strokeOpacity,
+      double? fillOpacity,
+      String? fontFamily,
+      String? textAlign}) {
     final selected = selectedElements;
     if (selected.isEmpty) return;
     final before = _document;
     for (final element in selected) {
       _document = _document.replaceElement(element.copyWith(
-        strokeColor: strokeColor, fillColor: fillColor, strokeWidth: strokeWidth,
-        strokeAlignment: strokeAlignment, opacity: opacity, strokeOpacity: strokeOpacity, fillOpacity: fillOpacity,
-        fontFamily: fontFamily, textAlign: textAlign,
+        strokeColor: strokeColor,
+        fillColor: fillColor,
+        strokeWidth: strokeWidth,
+        strokeAlignment: strokeAlignment,
+        opacity: opacity,
+        strokeOpacity: strokeOpacity,
+        fillOpacity: fillOpacity,
+        fontFamily: fontFamily,
+        textAlign: textAlign,
       ));
     }
     final propertyKey = [
@@ -228,7 +262,8 @@ class CanvasEditorController extends ChangeNotifier {
       if (textAlign != null) 'textAlign',
     ].join(',');
     final selectedKey = _selectedIds.toList()..sort();
-    _recordHistory(before, mergeKey: 'element-properties:$propertyKey:$selectedKey');
+    _recordHistory(before,
+        mergeKey: 'element-properties:$propertyKey:$selectedKey');
     notifyListeners();
   }
 
@@ -244,7 +279,8 @@ class CanvasEditorController extends ChangeNotifier {
 
   void setSelectedImageSize({double? width, double? height}) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.image) return;
+    if (selected.length != 1 ||
+        selected.single.type != DrawingElementType.image) return;
     final before = _document;
     final element = selected.single;
     final originalWidth = element.width.abs().clamp(0.001, double.infinity);
@@ -271,40 +307,50 @@ class CanvasEditorController extends ChangeNotifier {
 
   void setSelectedTextBlockSize({double? width, double? height}) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+      return;
     final before = _document;
     final element = selected.single;
     _document = _document.replaceElement(element.copyWith(
-      width: width == null ? element.width : width.clamp(40.0, 2000.0).toDouble(),
-      height: height == null ? element.height : height.clamp(24.0, 2000.0).toDouble(),
+      width:
+          width == null ? element.width : width.clamp(40.0, 2000.0).toDouble(),
+      height: height == null
+          ? element.height
+          : height.clamp(24.0, 2000.0).toDouble(),
     ));
     _recordHistory(before, mergeKey: 'text-block-size');
     notifyListeners();
   }
 
-  DrawingElement? selectElementAt(Point2 point, {double tolerance = 8, bool preserveSelection = false}) {
+  DrawingElement? selectElementAt(Point2 point,
+      {double tolerance = 8, bool preserveSelection = false}) {
     final hit = _hitTest(point, tolerance);
     if (hit == null) return null;
     if (preserveSelection && _selectedIds.contains(hit.id)) return hit;
     final groupId = hit.extraData['flutterdrawGroupId'];
     final ids = groupId is String
-        ? _document.elements.where((e) => e.extraData['flutterdrawGroupId'] == groupId).map((e) => e.id)
+        ? _document.elements
+            .where((e) => e.extraData['flutterdrawGroupId'] == groupId)
+            .map((e) => e.id)
         : [hit.id];
-    _selectedIds..clear()..addAll(ids);
+    _selectedIds
+      ..clear()
+      ..addAll(ids);
     notifyListeners();
     return hit;
   }
 
   void setSelectedTextFontSize(double value) {
     final selected = selectedElements;
-    if (selected.length != 1 || selected.single.type != DrawingElementType.text) return;
+    if (selected.length != 1 || selected.single.type != DrawingElementType.text)
+      return;
     final before = _document;
     final original = selected.single;
     final fontSize = value.clamp(10.0, 96.0).toDouble();
     _document = _document.replaceElement(original.copyWith(
       fontSize: fontSize,
-      height: math.max(fontSize * 1.5,
-          original.text.split('\n').length * fontSize * 1.45),
+      height: math.max(
+          fontSize * 1.5, original.text.split('\n').length * fontSize * 1.45),
     ));
     _recordHistory(before, mergeKey: 'text-font-size');
     notifyListeners();
@@ -352,7 +398,8 @@ class CanvasEditorController extends ChangeNotifier {
     final selectedBounds = selectionBounds;
     if (canResizeSelection && selectedBounds != null) {
       final selected = selectedElements.single;
-      final handle = _hitResizeHandle(selectedBounds, worldPosition, hitTolerance);
+      final handle =
+          _hitResizeHandle(selectedBounds, worldPosition, hitTolerance);
       if (handle != null) {
         _gestureStart = worldPosition;
         _gestureOriginals = [selected];
@@ -366,11 +413,22 @@ class CanvasEditorController extends ChangeNotifier {
     final hit = _hitTest(worldPosition, hitTolerance);
     if (hit != null) {
       final groupId = hit.extraData['flutterdrawGroupId'];
-      final hitIds = groupId is String ? _document.elements.where((e) => e.extraData['flutterdrawGroupId'] == groupId).map((e) => e.id).toSet() : {hit.id};
+      final hitIds = groupId is String
+          ? _document.elements
+              .where((e) => e.extraData['flutterdrawGroupId'] == groupId)
+              .map((e) => e.id)
+              .toSet()
+          : {hit.id};
       if (!additiveSelection && !_selectedIds.contains(hit.id)) {
-        _selectedIds..clear()..addAll(hitIds);
+        _selectedIds
+          ..clear()
+          ..addAll(hitIds);
       } else if (additiveSelection) {
-        if (hitIds.every(_selectedIds.contains)) { _selectedIds.removeAll(hitIds); } else { _selectedIds.addAll(hitIds); }
+        if (hitIds.every(_selectedIds.contains)) {
+          _selectedIds.removeAll(hitIds);
+        } else {
+          _selectedIds.addAll(hitIds);
+        }
       }
       if (_selectedIds.contains(hit.id)) {
         _gestureStart = worldPosition;
@@ -421,8 +479,12 @@ class CanvasEditorController extends ChangeNotifier {
     }
 
     if (_isMoving && _gestureOriginals.isNotEmpty) {
-      final delta = _snappedMoveDelta(worldPosition.x - start.x, worldPosition.y - start.y);
-      for (final original in _gestureOriginals) { _document = _document.replaceElement(original.translated(delta.x, delta.y)); }
+      final delta = _snappedMoveDelta(
+          worldPosition.x - start.x, worldPosition.y - start.y);
+      for (final original in _gestureOriginals) {
+        _document =
+            _document.replaceElement(original.translated(delta.x, delta.y));
+      }
       notifyListeners();
     }
   }
@@ -479,9 +541,12 @@ class CanvasEditorController extends ChangeNotifier {
           _resizeElement(_gestureOriginals.single, handle, worldPosition);
         }
       } else if (_isMoving && _gestureOriginals.isNotEmpty) {
-        final delta = _snappedMoveDelta(worldPosition.x - _gestureStart!.x, worldPosition.y - _gestureStart!.y);
+        final delta = _snappedMoveDelta(worldPosition.x - _gestureStart!.x,
+            worldPosition.y - _gestureStart!.y);
         for (final original in _gestureOriginals) {
-          _document = _document.replaceElement(delta.x == 0 && delta.y == 0 ? original : original.translated(delta.x, delta.y));
+          _document = _document.replaceElement(delta.x == 0 && delta.y == 0
+              ? original
+              : original.translated(delta.x, delta.y));
         }
       }
       _clearGesture();
@@ -499,7 +564,10 @@ class CanvasEditorController extends ChangeNotifier {
   void setSnapToGuides(bool enabled) {
     if (_snapToGuides == enabled) return;
     _snapToGuides = enabled;
-    if (!enabled) { _alignmentGuidesX = const []; _alignmentGuidesY = const []; }
+    if (!enabled) {
+      _alignmentGuidesX = const [];
+      _alignmentGuidesY = const [];
+    }
     notifyListeners();
   }
 
@@ -517,11 +585,14 @@ class CanvasEditorController extends ChangeNotifier {
   }
 
   void ungroupSelection() {
-    final grouped = selectedElements.where((e) => e.extraData['flutterdrawGroupId'] is String).toList();
+    final grouped = selectedElements
+        .where((e) => e.extraData['flutterdrawGroupId'] is String)
+        .toList();
     if (grouped.isEmpty) return;
     final before = _document;
     for (final element in grouped) {
-      final data = Map<String, Object?>.from(element.extraData)..remove('flutterdrawGroupId');
+      final data = Map<String, Object?>.from(element.extraData)
+        ..remove('flutterdrawGroupId');
       _document = _document.replaceElement(element.copyWith(extraData: data));
     }
     _recordHistory(before);
@@ -536,12 +607,26 @@ class CanvasEditorController extends ChangeNotifier {
     for (final element in selected) {
       var dx = 0.0, dy = 0.0;
       switch (alignment) {
-        case ElementAlignment.left: dx = bounds.left - element.left; break;
-        case ElementAlignment.centerHorizontal: dx = (bounds.left + bounds.right) / 2 - (element.left + element.right) / 2; break;
-        case ElementAlignment.right: dx = bounds.right - element.right; break;
-        case ElementAlignment.top: dy = bounds.top - element.top; break;
-        case ElementAlignment.centerVertical: dy = (bounds.top + bounds.bottom) / 2 - (element.top + element.bottom) / 2; break;
-        case ElementAlignment.bottom: dy = bounds.bottom - element.bottom; break;
+        case ElementAlignment.left:
+          dx = bounds.left - element.left;
+          break;
+        case ElementAlignment.centerHorizontal:
+          dx = (bounds.left + bounds.right) / 2 -
+              (element.left + element.right) / 2;
+          break;
+        case ElementAlignment.right:
+          dx = bounds.right - element.right;
+          break;
+        case ElementAlignment.top:
+          dy = bounds.top - element.top;
+          break;
+        case ElementAlignment.centerVertical:
+          dy = (bounds.top + bounds.bottom) / 2 -
+              (element.top + element.bottom) / 2;
+          break;
+        case ElementAlignment.bottom:
+          dy = bounds.bottom - element.bottom;
+          break;
       }
       _document = _document.replaceElement(element.translated(dx, dy));
     }
@@ -552,27 +637,47 @@ class CanvasEditorController extends ChangeNotifier {
   void selectElementById(String id, {bool additive = false}) {
     DrawingElement? element;
     for (final candidate in _document.elements) {
-      if (candidate.id == id) { element = candidate; break; }
+      if (candidate.id == id) {
+        element = candidate;
+        break;
+      }
     }
     if (element == null) return;
     final groupId = element.extraData['flutterdrawGroupId'];
     final ids = groupId is String
-        ? _document.elements.where((e) => e.extraData['flutterdrawGroupId'] == groupId).map((e) => e.id).toSet()
+        ? _document.elements
+            .where((e) => e.extraData['flutterdrawGroupId'] == groupId)
+            .map((e) => e.id)
+            .toSet()
         : {id};
     if (additive) {
-      if (ids.every(_selectedIds.contains)) { _selectedIds.removeAll(ids); } else { _selectedIds.addAll(ids); }
+      if (ids.every(_selectedIds.contains)) {
+        _selectedIds.removeAll(ids);
+      } else {
+        _selectedIds.addAll(ids);
+      }
     } else {
-      _selectedIds..clear()..addAll(ids);
+      _selectedIds
+        ..clear()
+        ..addAll(ids);
     }
     notifyListeners();
   }
 
   void reorderLayers(List<String> topToBottomIds) {
-    final byId = {for (final element in _document.elements) element.id: element};
-    final ordered = topToBottomIds.reversed.where(byId.containsKey).map((id) => byId[id]!).toList();
+    final byId = {
+      for (final element in _document.elements) element.id: element
+    };
+    final ordered = topToBottomIds.reversed
+        .where(byId.containsKey)
+        .map((id) => byId[id]!)
+        .toList();
     if (ordered.length != _document.elements.length) return;
     final before = _document;
-    _document = DrawDocument(elements: ordered, assets: _document.assets, extraData: _document.extraData);
+    _document = DrawDocument(
+        elements: ordered,
+        assets: _document.assets,
+        extraData: _document.extraData);
     _recordHistory(before);
     notifyListeners();
   }
@@ -610,12 +715,17 @@ class CanvasEditorController extends ChangeNotifier {
       var copy = element.translated(20, 20, newId: 'element-$_idCounter');
       final originalGroup = element.extraData['flutterdrawGroupId'];
       if (originalGroup is String) {
-        final newGroup = groupRemap.putIfAbsent(originalGroup, () => 'group-${++_groupCounter}');
-        copy = copy.copyWith(extraData: {...copy.extraData, 'flutterdrawGroupId': newGroup});
+        final newGroup = groupRemap.putIfAbsent(
+            originalGroup, () => 'group-${++_groupCounter}');
+        copy = copy.copyWith(
+            extraData: {...copy.extraData, 'flutterdrawGroupId': newGroup});
       }
       copies.add(copy);
     }
-    _document = DrawDocument(elements: [..._document.elements, ...copies], assets: _document.assets, extraData: _document.extraData);
+    _document = DrawDocument(
+        elements: [..._document.elements, ...copies],
+        assets: _document.assets,
+        extraData: _document.extraData);
     _selectedIds
       ..clear()
       ..addAll(copies.map((element) => element.id));
@@ -677,7 +787,9 @@ class CanvasEditorController extends ChangeNotifier {
     if (_historyIndex < _history.length - 1) {
       _history.removeRange(_historyIndex + 1, _history.length);
     }
-    if (mergeKey != null && mergeKey == _lastHistoryMergeKey && _historyIndex > 0) {
+    if (mergeKey != null &&
+        mergeKey == _lastHistoryMergeKey &&
+        _historyIndex > 0) {
       _history[_historyIndex] = _document;
     } else {
       _history.add(_document);
@@ -737,15 +849,18 @@ class CanvasEditorController extends ChangeNotifier {
   DrawingElement? _hitTest(Point2 point, double tolerance) {
     for (final element in _document.elements.reversed) {
       if (element.type == DrawingElementType.text) {
-        if (point.x >= element.left - tolerance && point.x <= element.right + tolerance &&
-            point.y >= element.top - tolerance && point.y <= element.bottom + tolerance) {
+        if (point.x >= element.left - tolerance &&
+            point.x <= element.right + tolerance &&
+            point.y >= element.top - tolerance &&
+            point.y <= element.bottom + tolerance) {
           return element;
         }
       } else if (element.type == DrawingElementType.line ||
           element.type == DrawingElementType.arrow ||
           element.type == DrawingElementType.freehand) {
         for (var i = 1; i < element.points.length; i++) {
-          if (_distanceToSegment(point, element.points[i - 1], element.points[i]) <=
+          if (_distanceToSegment(
+                  point, element.points[i - 1], element.points[i]) <=
               tolerance + element.strokeWidth) {
             return element;
           }
@@ -767,8 +882,8 @@ class CanvasEditorController extends ChangeNotifier {
     if (lengthSquared == 0) {
       return math.sqrt(math.pow(p.x - a.x, 2) + math.pow(p.y - a.y, 2));
     }
-    final t = (((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared)
-        .clamp(0.0, 1.0);
+    final t =
+        (((p.x - a.x) * dx + (p.y - a.y) * dy) / lengthSquared).clamp(0.0, 1.0);
     final x = a.x + t * dx;
     final y = a.y + t * dy;
     return math.sqrt(math.pow(p.x - x, 2) + math.pow(p.y - y, 2));
@@ -846,8 +961,10 @@ class CanvasEditorController extends ChangeNotifier {
     }
     if (original.type == DrawingElementType.image && _lockImageAspectRatio) {
       const minimumSize = 1.0;
-      final originalWidth = original.width.abs().clamp(minimumSize, double.infinity);
-      final originalHeight = original.height.abs().clamp(minimumSize, double.infinity);
+      final originalWidth =
+          original.width.abs().clamp(minimumSize, double.infinity);
+      final originalHeight =
+          original.height.abs().clamp(minimumSize, double.infinity);
       final aspectRatio = originalWidth / originalHeight;
       final rawWidth = (right - left).abs();
       final rawHeight = (bottom - top).abs();
@@ -909,10 +1026,14 @@ class CanvasEditorController extends ChangeNotifier {
     if (!_snapToGrid && !_snapToGuides) return Point2(dx, dy);
     final originals = _gestureOriginals;
     if (originals.isEmpty) return Point2(dx, dy);
-    final left = originals.map((e) => e.left).reduce((a, b) => a < b ? a : b) + dx;
-    final top = originals.map((e) => e.top).reduce((a, b) => a < b ? a : b) + dy;
-    final right = originals.map((e) => e.right).reduce((a, b) => a > b ? a : b) + dx;
-    final bottom = originals.map((e) => e.bottom).reduce((a, b) => a > b ? a : b) + dy;
+    final left =
+        originals.map((e) => e.left).reduce((a, b) => a < b ? a : b) + dx;
+    final top =
+        originals.map((e) => e.top).reduce((a, b) => a < b ? a : b) + dy;
+    final right =
+        originals.map((e) => e.right).reduce((a, b) => a > b ? a : b) + dx;
+    final bottom =
+        originals.map((e) => e.bottom).reduce((a, b) => a > b ? a : b) + dy;
     final centerX = (left + right) / 2, centerY = (top + bottom) / 2;
     const grid = 24.0, tolerance = 8.0;
     var adjustX = 0.0, adjustY = 0.0;
@@ -924,24 +1045,39 @@ class CanvasEditorController extends ChangeNotifier {
     }
     if (_snapToGuides) {
       double? bestX, bestY, guideX, guideY;
-      for (final other in _document.elements.where((e) => !_selectedIds.contains(e.id))) {
+      for (final other
+          in _document.elements.where((e) => !_selectedIds.contains(e.id))) {
         final xs = [other.left, (other.left + other.right) / 2, other.right];
         final ys = [other.top, (other.top + other.bottom) / 2, other.bottom];
         for (final own in [left, centerX, right]) {
           for (final target in xs) {
             final difference = target - own;
-            if (difference.abs() <= tolerance && (bestX == null || difference.abs() < bestX.abs())) { bestX = difference; guideX = target; }
+            if (difference.abs() <= tolerance &&
+                (bestX == null || difference.abs() < bestX.abs())) {
+              bestX = difference;
+              guideX = target;
+            }
           }
         }
         for (final own in [top, centerY, bottom]) {
           for (final target in ys) {
             final difference = target - own;
-            if (difference.abs() <= tolerance && (bestY == null || difference.abs() < bestY.abs())) { bestY = difference; guideY = target; }
+            if (difference.abs() <= tolerance &&
+                (bestY == null || difference.abs() < bestY.abs())) {
+              bestY = difference;
+              guideY = target;
+            }
           }
         }
       }
-      if (bestX != null) { adjustX = bestX; _alignmentGuidesX = [guideX!]; }
-      if (bestY != null) { adjustY = bestY; _alignmentGuidesY = [guideY!]; }
+      if (bestX != null) {
+        adjustX = bestX;
+        _alignmentGuidesX = [guideX!];
+      }
+      if (bestY != null) {
+        adjustY = bestY;
+        _alignmentGuidesY = [guideY!];
+      }
     }
     return Point2(dx + adjustX, dy + adjustY);
   }

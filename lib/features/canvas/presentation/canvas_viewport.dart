@@ -65,14 +65,19 @@ class _CanvasViewportState extends State<CanvasViewport> {
 
   void _handlePointerDown(PointerDownEvent event) {
     if (_editingTextId != null) return;
-    if (event.kind == PointerDeviceKind.mouse && event.buttons & kSecondaryMouseButton != 0) { _showContextMenu(event); return; }
+    if (event.kind == PointerDeviceKind.mouse &&
+        event.buttons & kSecondaryMouseButton != 0) {
+      _showContextMenu(event);
+      return;
+    }
     _focusNode.requestFocus();
     final isMouse = event.kind == PointerDeviceKind.mouse;
     final isMiddleMouse = isMouse && event.buttons & kMiddleMouseButton != 0;
     final isSpaceDrag =
         isMouse && _spacePressed && event.buttons & kPrimaryMouseButton != 0;
 
-    if (isMiddleMouse || isSpaceDrag ||
+    if (isMiddleMouse ||
+        isSpaceDrag ||
         widget.controller.activeTool == CanvasTool.hand) {
       setState(() {
         _isPanning = true;
@@ -103,50 +108,118 @@ class _CanvasViewportState extends State<CanvasViewport> {
   }
 
   Future<void> _showContextMenu(PointerDownEvent event) async {
-    final hit = widget.controller.selectElementAt(_toWorld(event.localPosition), tolerance: 8 / _transform.scale, preserveSelection: true);
+    final hit = widget.controller.selectElementAt(_toWorld(event.localPosition),
+        tolerance: 8 / _transform.scale, preserveSelection: true);
     if (hit == null) widget.controller.clearSelection();
     final hasSelection = widget.controller.selectedElementIds.isNotEmpty;
     final multi = widget.controller.selectedElementIds.length > 1;
     final action = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(event.position.dx, event.position.dy,
-        MediaQuery.of(context).size.width - event.position.dx,
-        MediaQuery.of(context).size.height - event.position.dy),
+      position: RelativeRect.fromLTRB(
+          event.position.dx,
+          event.position.dy,
+          MediaQuery.of(context).size.width - event.position.dx,
+          MediaQuery.of(context).size.height - event.position.dy),
       items: [
-        PopupMenuItem(value: 'copy', enabled: hasSelection, child: const Text('Копировать')),
+        PopupMenuItem(
+            value: 'copy',
+            enabled: hasSelection,
+            child: const Text('Копировать')),
         const PopupMenuItem(value: 'paste', child: Text('Вставить')),
-        PopupMenuItem(value: 'duplicate', enabled: hasSelection, child: const Text('Дублировать')),
+        PopupMenuItem(
+            value: 'duplicate',
+            enabled: hasSelection,
+            child: const Text('Дублировать')),
         const PopupMenuDivider(),
-        PopupMenuItem(value: 'group', enabled: multi, child: const Text('Сгруппировать')),
-        PopupMenuItem(value: 'ungroup', enabled: widget.controller.canUngroupSelection, child: const Text('Разгруппировать')),
+        PopupMenuItem(
+            value: 'group', enabled: multi, child: const Text('Сгруппировать')),
+        PopupMenuItem(
+            value: 'ungroup',
+            enabled: widget.controller.canUngroupSelection,
+            child: const Text('Разгруппировать')),
         const PopupMenuDivider(),
-        PopupMenuItem(value: 'align-left', enabled: multi, child: const Text('По левому краю')),
-        PopupMenuItem(value: 'align-center-x', enabled: multi, child: const Text('По центру по горизонтали')),
-        PopupMenuItem(value: 'align-right', enabled: multi, child: const Text('По правому краю')),
-        PopupMenuItem(value: 'align-top', enabled: multi, child: const Text('По верхнему краю')),
-        PopupMenuItem(value: 'align-center-y', enabled: multi, child: const Text('По центру по вертикали')),
-        PopupMenuItem(value: 'align-bottom', enabled: multi, child: const Text('По нижнему краю')),
+        PopupMenuItem(
+            value: 'align-left',
+            enabled: multi,
+            child: const Text('По левому краю')),
+        PopupMenuItem(
+            value: 'align-center-x',
+            enabled: multi,
+            child: const Text('По центру по горизонтали')),
+        PopupMenuItem(
+            value: 'align-right',
+            enabled: multi,
+            child: const Text('По правому краю')),
+        PopupMenuItem(
+            value: 'align-top',
+            enabled: multi,
+            child: const Text('По верхнему краю')),
+        PopupMenuItem(
+            value: 'align-center-y',
+            enabled: multi,
+            child: const Text('По центру по вертикали')),
+        PopupMenuItem(
+            value: 'align-bottom',
+            enabled: multi,
+            child: const Text('По нижнему краю')),
         const PopupMenuDivider(),
-        PopupMenuItem(value: 'front', enabled: hasSelection, child: const Text('На передний план')),
-        PopupMenuItem(value: 'back', enabled: hasSelection, child: const Text('На задний план')),
-        PopupMenuItem(value: 'delete', enabled: hasSelection, child: const Text('Удалить')),
+        PopupMenuItem(
+            value: 'front',
+            enabled: hasSelection,
+            child: const Text('На передний план')),
+        PopupMenuItem(
+            value: 'back',
+            enabled: hasSelection,
+            child: const Text('На задний план')),
+        PopupMenuItem(
+            value: 'delete',
+            enabled: hasSelection,
+            child: const Text('Удалить')),
       ],
     );
     switch (action) {
-      case 'copy': widget.controller.copySelection(); break;
-      case 'paste': widget.controller.paste(); break;
-      case 'duplicate': widget.controller.duplicateSelection(); break;
-      case 'group': widget.controller.groupSelection(); break;
-      case 'ungroup': widget.controller.ungroupSelection(); break;
-      case 'align-left': widget.controller.alignSelection(ElementAlignment.left); break;
-      case 'align-center-x': widget.controller.alignSelection(ElementAlignment.centerHorizontal); break;
-      case 'align-right': widget.controller.alignSelection(ElementAlignment.right); break;
-      case 'align-top': widget.controller.alignSelection(ElementAlignment.top); break;
-      case 'align-center-y': widget.controller.alignSelection(ElementAlignment.centerVertical); break;
-      case 'align-bottom': widget.controller.alignSelection(ElementAlignment.bottom); break;
-      case 'front': widget.controller.bringSelectionToFront(); break;
-      case 'back': widget.controller.sendSelectionToBack(); break;
-      case 'delete': widget.controller.deleteSelection(); break;
+      case 'copy':
+        widget.controller.copySelection();
+        break;
+      case 'paste':
+        widget.controller.paste();
+        break;
+      case 'duplicate':
+        widget.controller.duplicateSelection();
+        break;
+      case 'group':
+        widget.controller.groupSelection();
+        break;
+      case 'ungroup':
+        widget.controller.ungroupSelection();
+        break;
+      case 'align-left':
+        widget.controller.alignSelection(ElementAlignment.left);
+        break;
+      case 'align-center-x':
+        widget.controller.alignSelection(ElementAlignment.centerHorizontal);
+        break;
+      case 'align-right':
+        widget.controller.alignSelection(ElementAlignment.right);
+        break;
+      case 'align-top':
+        widget.controller.alignSelection(ElementAlignment.top);
+        break;
+      case 'align-center-y':
+        widget.controller.alignSelection(ElementAlignment.centerVertical);
+        break;
+      case 'align-bottom':
+        widget.controller.alignSelection(ElementAlignment.bottom);
+        break;
+      case 'front':
+        widget.controller.bringSelectionToFront();
+        break;
+      case 'back':
+        widget.controller.sendSelectionToBack();
+        break;
+      case 'delete':
+        widget.controller.deleteSelection();
+        break;
     }
   }
 
@@ -176,7 +249,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
             child: const Text('Отмена'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(textController.text),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(textController.text),
             child: const Text('Добавить'),
           ),
         ],
@@ -189,7 +263,8 @@ class _CanvasViewportState extends State<CanvasViewport> {
 
   void _beginInlineTextEdit(Point2 position) {
     if (_editingTextId != null) return;
-    final element = widget.controller.selectElementAt(position, tolerance: 10 / _transform.scale);
+    final element = widget.controller
+        .selectElementAt(position, tolerance: 10 / _transform.scale);
     if (element == null || element.type != DrawingElementType.text) return;
     _inlineTextController?.dispose();
     _inlineTextFocus?.dispose();
@@ -234,39 +309,55 @@ class _CanvasViewportState extends State<CanvasViewport> {
   Widget _buildInlineTextEditor() {
     DrawingElement? element;
     for (final item in widget.controller.document.elements) {
-      if (item.id == _editingTextId) { element = item; break; }
+      if (item.id == _editingTextId) {
+        element = item;
+        break;
+      }
     }
     if (element == null) return const SizedBox.shrink();
     final screen = _transform.worldToScreen(Point2(element.x, element.y));
     return Positioned(
-      left: screen.x, top: screen.y,
+      left: screen.x,
+      top: screen.y,
       width: math.max(120.0, element.width * _transform.scale),
       height: math.max(48.0, element.height * _transform.scale),
-      child: Material(color: Colors.transparent, child: TextField(
-        controller: _inlineTextController, focusNode: _inlineTextFocus,
-        maxLines: null, expands: true,
-        textInputAction: TextInputAction.done,
-        onTapOutside: (_) => _finishInlineTextEdit(),
-        textAlign: _textAlignFor(element.textAlign),
-        style: TextStyle(fontFamily: element.fontFamily,
-          fontSize: element.fontSize * _transform.scale,
-          color: Color(element.strokeColor).withValues(alpha: element.opacity)),
-        decoration: const InputDecoration(contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(), filled: true, fillColor: Color(0x22FFFFFF)),
-        onSubmitted: (_) => _finishInlineTextEdit(),
-      )),
+      child: Material(
+          color: Colors.transparent,
+          child: TextField(
+            controller: _inlineTextController,
+            focusNode: _inlineTextFocus,
+            maxLines: null,
+            expands: true,
+            textInputAction: TextInputAction.done,
+            onTapOutside: (_) => _finishInlineTextEdit(),
+            textAlign: _textAlignFor(element.textAlign),
+            style: TextStyle(
+                fontFamily: element.fontFamily,
+                fontSize: element.fontSize * _transform.scale,
+                color: Color(element.strokeColor)
+                    .withValues(alpha: element.opacity)),
+            decoration: const InputDecoration(
+                contentPadding: EdgeInsets.zero,
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Color(0x22FFFFFF)),
+            onSubmitted: (_) => _finishInlineTextEdit(),
+          )),
     );
   }
 
   void _finishInlineTextEdit() {
     final id = _editingTextId;
     final value = _inlineTextController?.text ?? '';
-    if (id != null && widget.controller.selectedElements.any((e) => e.id == id)) {
+    if (id != null &&
+        widget.controller.selectedElements.any((e) => e.id == id)) {
       widget.controller.updateSelectedText(value);
     }
     setState(() => _editingTextId = null);
-    _inlineTextController?.dispose(); _inlineTextController = null;
-    _inlineTextFocus?.dispose(); _inlineTextFocus = null;
+    _inlineTextController?.dispose();
+    _inlineTextController = null;
+    _inlineTextFocus?.dispose();
+    _inlineTextFocus = null;
     _focusNode.requestFocus();
   }
 
@@ -369,7 +460,11 @@ class _CanvasViewportState extends State<CanvasViewport> {
     }
 
     if (isCommand && event.logicalKey == LogicalKeyboardKey.keyG) {
-      if (HardwareKeyboard.instance.isShiftPressed) { widget.controller.ungroupSelection(); } else { widget.controller.groupSelection(); }
+      if (HardwareKeyboard.instance.isShiftPressed) {
+        widget.controller.ungroupSelection();
+      } else {
+        widget.controller.groupSelection();
+      }
       return KeyEventResult.handled;
     }
     if (isCommand) {
@@ -410,8 +505,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? const Color(0xFF202124) : const Color(0xFFFCFCFD);
-    final dotColor =
-        isDark ? const Color(0xFF41434A) : const Color(0xFFD5D6DC);
+    final dotColor = isDark ? const Color(0xFF41434A) : const Color(0xFFD5D6DC);
 
     return Focus(
       focusNode: _focusNode,
@@ -437,45 +531,55 @@ class _CanvasViewportState extends State<CanvasViewport> {
             cursor: cursor,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onDoubleTapDown: (details) => _beginInlineTextEdit(_toWorld(details.localPosition)),
+              onDoubleTapDown: (details) =>
+                  _beginInlineTextEdit(_toWorld(details.localPosition)),
               child: Listener(
-              behavior: HitTestBehavior.opaque,
-              onPointerDown: _handlePointerDown,
-              onPointerMove: _handlePointerMove,
-              onPointerUp: _handlePointerUp,
-              onPointerCancel: _handlePointerCancel,
-              onPointerSignal: _handlePointerSignal,
-              onPointerPanZoomStart: _handlePanZoomStart,
-              onPointerPanZoomUpdate: _handlePanZoomUpdate,
-              onPointerPanZoomEnd: _handlePanZoomEnd,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Stack(
-                    clipBehavior: Clip.hardEdge,
-                    children: [
-                      Positioned.fill(child: CustomPaint(
-                        painter: _CanvasPainter(
-                          transform: _transform, backgroundColor: backgroundColor,
-                          dotColor: dotColor, elements: widget.controller.document.elements,
-                          preview: widget.controller.drawingPreview,
-                          selection: widget.controller.selectionBounds,
-                          showResizeHandles: widget.controller.canResizeSelection,
-                          marquee: widget.controller.marqueeBounds,
-                          editingTextId: _editingTextId,
-                          alignmentGuidesX: widget.controller.alignmentGuidesX,
-                          alignmentGuidesY: widget.controller.alignmentGuidesY,
-                        ),
-                      )),
-                      for (final element in widget.controller.document.elements)
-                        if (element.type == DrawingElementType.image &&
-                            element.assetId != null &&
-                            widget.controller.document.assets[element.assetId] != null)
-                          _buildImageElement(element),
-                      if (_editingTextId != null) _buildInlineTextEditor(),
-                    ],
-                  );
-                },
-              ),
+                behavior: HitTestBehavior.opaque,
+                onPointerDown: _handlePointerDown,
+                onPointerMove: _handlePointerMove,
+                onPointerUp: _handlePointerUp,
+                onPointerCancel: _handlePointerCancel,
+                onPointerSignal: _handlePointerSignal,
+                onPointerPanZoomStart: _handlePanZoomStart,
+                onPointerPanZoomUpdate: _handlePanZoomUpdate,
+                onPointerPanZoomEnd: _handlePanZoomEnd,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Stack(
+                      clipBehavior: Clip.hardEdge,
+                      children: [
+                        Positioned.fill(
+                            child: CustomPaint(
+                          painter: _CanvasPainter(
+                            transform: _transform,
+                            backgroundColor: backgroundColor,
+                            dotColor: dotColor,
+                            elements: widget.controller.document.elements,
+                            preview: widget.controller.drawingPreview,
+                            selection: widget.controller.selectionBounds,
+                            showResizeHandles:
+                                widget.controller.canResizeSelection,
+                            marquee: widget.controller.marqueeBounds,
+                            editingTextId: _editingTextId,
+                            alignmentGuidesX:
+                                widget.controller.alignmentGuidesX,
+                            alignmentGuidesY:
+                                widget.controller.alignmentGuidesY,
+                          ),
+                        )),
+                        for (final element
+                            in widget.controller.document.elements)
+                          if (element.type == DrawingElementType.image &&
+                              element.assetId != null &&
+                              widget.controller.document
+                                      .assets[element.assetId] !=
+                                  null)
+                            _buildImageElement(element),
+                        if (_editingTextId != null) _buildInlineTextEditor(),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           );
@@ -486,10 +590,10 @@ class _CanvasViewportState extends State<CanvasViewport> {
 }
 
 TextAlign _textAlignFor(String value) => switch (value) {
-  'center' => TextAlign.center,
-  'right' => TextAlign.right,
-  _ => TextAlign.left,
-};
+      'center' => TextAlign.center,
+      'right' => TextAlign.right,
+      _ => TextAlign.left,
+    };
 
 class _CanvasPainter extends CustomPainter {
   const _CanvasPainter({
@@ -534,7 +638,9 @@ class _CanvasPainter extends CustomPainter {
     if (selection != null) _paintSelection(canvas, selection!);
     if (marquee != null) _paintMarquee(canvas, marquee!);
     canvas.restore();
-    final guidePaint = Paint()..color = const Color(0xFF12A6A0).withValues(alpha: 0.9)..strokeWidth = 1;
+    final guidePaint = Paint()
+      ..color = const Color(0xFF12A6A0).withValues(alpha: 0.9)
+      ..strokeWidth = 1;
     for (final x in alignmentGuidesX) {
       final sx = transform.worldToScreen(Point2(x, 0)).x;
       canvas.drawLine(Offset(sx, 0), Offset(sx, size.height), guidePaint);
@@ -581,7 +687,8 @@ class _CanvasPainter extends CustomPainter {
         text: TextSpan(
           text: element.text,
           style: TextStyle(
-            color: Color(element.strokeColor).withValues(alpha: element.strokeOpacity * opacity),
+            color: Color(element.strokeColor)
+                .withValues(alpha: element.strokeOpacity * opacity),
             fontSize: element.fontSize,
             fontFamily: element.fontFamily,
             height: 1.2,
@@ -591,7 +698,8 @@ class _CanvasPainter extends CustomPainter {
         textAlign: _textAlignFor(element.textAlign),
       )..layout(maxWidth: math.max(40.0, element.width));
       canvas.save();
-      canvas.clipRect(Rect.fromLTWH(element.x, element.y, element.width, element.height));
+      canvas.clipRect(
+          Rect.fromLTWH(element.x, element.y, element.width, element.height));
       painter.paint(canvas, Offset(element.x, element.y));
       canvas.restore();
       return;
@@ -612,23 +720,29 @@ class _CanvasPainter extends CustomPainter {
     final path = Path();
     switch (element.type) {
       case DrawingElementType.rectangle:
-        _roughPolygon(path, [
-          rect.topLeft,
-          rect.topRight,
-          rect.bottomRight,
-          rect.bottomLeft,
-        ], element);
+        _roughPolygon(
+            path,
+            [
+              rect.topLeft,
+              rect.topRight,
+              rect.bottomRight,
+              rect.bottomLeft,
+            ],
+            element);
         break;
       case DrawingElementType.ellipse:
         _roughEllipse(path, rect, element);
         break;
       case DrawingElementType.diamond:
-        _roughPolygon(path, [
-          Offset(rect.center.dx, rect.top),
-          Offset(rect.right, rect.center.dy),
-          Offset(rect.center.dx, rect.bottom),
-          Offset(rect.left, rect.center.dy),
-        ], element);
+        _roughPolygon(
+            path,
+            [
+              Offset(rect.center.dx, rect.top),
+              Offset(rect.right, rect.center.dy),
+              Offset(rect.center.dx, rect.bottom),
+              Offset(rect.left, rect.center.dy),
+            ],
+            element);
         break;
       case DrawingElementType.line:
       case DrawingElementType.arrow:
@@ -639,7 +753,12 @@ class _CanvasPainter extends CustomPainter {
     }
     path.close();
     if (element.fillColor != 0x00000000) {
-      canvas.drawPath(path, Paint()..color = Color(element.fillColor).withValues(alpha: element.fillOpacity * opacity)..style = PaintingStyle.fill);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = Color(element.fillColor)
+                .withValues(alpha: element.fillOpacity * opacity)
+            ..style = PaintingStyle.fill);
     }
     if (element.strokeAlignment == StrokeAlignment.center) {
       canvas.drawPath(path, _strokePaint(element, opacity));
@@ -747,7 +866,8 @@ class _CanvasPainter extends CustomPainter {
     final paint = _strokePaint(element, opacity);
     canvas.drawPath(path, paint);
 
-    if (element.type == DrawingElementType.arrow && element.points.length >= 2) {
+    if (element.type == DrawingElementType.arrow &&
+        element.points.length >= 2) {
       final start = element.points[element.points.length - 2];
       final end = element.points.last;
       final angle = math.atan2(end.y - start.y, end.x - start.x);
@@ -769,7 +889,8 @@ class _CanvasPainter extends CustomPainter {
   }
 
   Paint _strokePaint(DrawingElement element, double opacity) => Paint()
-    ..color = Color(element.strokeColor).withValues(alpha: element.strokeOpacity * opacity)
+    ..color = Color(element.strokeColor)
+        .withValues(alpha: element.strokeOpacity * opacity)
     ..style = PaintingStyle.stroke
     ..strokeWidth = element.strokeWidth
     ..strokeCap = StrokeCap.round

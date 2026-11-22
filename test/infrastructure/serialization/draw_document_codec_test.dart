@@ -57,7 +57,11 @@ void main() {
         DrawingElement(
           id: 'text-style',
           type: DrawingElementType.text,
-          x: 4, y: 8, width: 240, height: 80, seed: 11,
+          x: 4,
+          y: 8,
+          width: 240,
+          height: 80,
+          seed: 11,
           text: 'Styled text',
           fontSize: 32,
           fontFamily: 'Georgia',

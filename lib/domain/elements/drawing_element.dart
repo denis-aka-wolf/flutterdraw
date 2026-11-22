@@ -105,10 +105,10 @@ class DrawingElement {
       width: end.x - start.x,
       height: end.y - start.y,
       seed: seed,
-      points: type == DrawingElementType.line ||
-              type == DrawingElementType.arrow
-          ? [start, end]
-          : const [],
+      points:
+          type == DrawingElementType.line || type == DrawingElementType.arrow
+              ? [start, end]
+              : const [],
     );
   }
 
@@ -134,9 +134,8 @@ class DrawingElement {
       id: newId,
       x: x + dx,
       y: y + dy,
-      points: points
-          .map((point) => Point2(point.x + dx, point.y + dy))
-          .toList(),
+      points:
+          points.map((point) => Point2(point.x + dx, point.y + dy)).toList(),
     );
   }
 

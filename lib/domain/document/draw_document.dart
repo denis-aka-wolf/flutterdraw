@@ -16,8 +16,8 @@ class DrawDocument {
   /// Unknown document-level fields retained when loading and saving a file.
   final Map<String, Object?> extraData;
 
-  DrawDocument addElement(DrawingElement element) =>
-      DrawDocument(elements: [...elements, element], assets: assets, extraData: extraData);
+  DrawDocument addElement(DrawingElement element) => DrawDocument(
+      elements: [...elements, element], assets: assets, extraData: extraData);
 
   DrawDocument addAsset(DocumentAsset asset) => DrawDocument(
         elements: elements,
@@ -35,7 +35,8 @@ class DrawDocument {
   }
 
   DrawDocument removeElements(Set<String> ids) => DrawDocument(
-        elements: elements.where((element) => !ids.contains(element.id)).toList(),
+        elements:
+            elements.where((element) => !ids.contains(element.id)).toList(),
         assets: assets,
         extraData: extraData,
       );
