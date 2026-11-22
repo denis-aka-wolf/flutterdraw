@@ -101,7 +101,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       }
       final session = jsonDecode(raw);
       if (session is! Map<String, dynamic> ||
-          session['document'] is! Map<String, dynamic>) return;
+          session['document'] is! Map<String, dynamic>) {
+        return;
+      }
       final document = _codec.decode(jsonEncode(session['document']));
       if (!mounted) {
         return;
