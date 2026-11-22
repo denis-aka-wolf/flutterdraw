@@ -101,6 +101,37 @@ void main() {
       expect(asset.extraData['futureAssetField'], 'preserved');
     });
 
+    test('round-trips image element references with embedded assets', () {
+      final document = DrawDocument(
+        elements: [
+          DrawingElement(
+            id: 'image-1',
+            type: DrawingElementType.image,
+            x: 12,
+            y: 18,
+            width: 320,
+            height: 180,
+            seed: 3,
+            assetId: 'asset-1',
+            fillOpacity: 0.6,
+          ),
+        ],
+        assets: {
+          'asset-1': DocumentAsset(
+            id: 'asset-1',
+            mimeType: 'image/png',
+            bytes: [1, 2, 3, 4],
+          ),
+        },
+      );
+
+      final restored = codec.decode(codec.encode(document));
+      expect(restored.elements.single.type, DrawingElementType.image);
+      expect(restored.elements.single.assetId, 'asset-1');
+      expect(restored.elements.single.fillOpacity, 0.6);
+      expect(restored.assets['asset-1']!.bytes, [1, 2, 3, 4]);
+    });
+
     test('preserves unknown document and element fields', () {
       const source = '''
       {
