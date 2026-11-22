@@ -182,14 +182,15 @@ class CanvasEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, double? opacity, String? fontFamily, String? textAlign}) {
+  void updateSelectedProperties({int? strokeColor, int? fillColor, double? strokeWidth, StrokeAlignment? strokeAlignment, double? opacity, String? fontFamily, String? textAlign}) {
     final selected = selectedElements;
     if (selected.isEmpty) return;
     final before = _document;
     for (final element in selected) {
       _document = _document.replaceElement(element.copyWith(
         strokeColor: strokeColor, fillColor: fillColor, strokeWidth: strokeWidth,
-        opacity: opacity, fontFamily: fontFamily, textAlign: textAlign,
+        strokeAlignment: strokeAlignment, opacity: opacity,
+        fontFamily: fontFamily, textAlign: textAlign,
       ));
     }
     final propertyKey = [
