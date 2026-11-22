@@ -67,10 +67,10 @@ class DocumentExport {
     for (final e in document.elements) {
       final stroke = _hex(e.strokeColor);
       final fill = e.fillColor == 0 ? 'none' : _hex(e.fillColor);
-      final common = 'stroke="$stroke" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" opacity="${e.opacity}"';
+      final common = 'stroke="$stroke" stroke-width="${e.strokeWidth}" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${e.strokeOpacity}"';
       switch (e.type) {
         case DrawingElementType.rectangle:
-          out.write('<rect x="${e.left}" y="${e.top}" width="${e.width.abs()}" height="${e.height.abs()}" fill="$fill" $common/>');
+          out.write('<rect x="${e.left}" y="${e.top}" width="${e.width.abs()}" height="${e.height.abs()}" fill="$fill" fill-opacity="${e.fillOpacity}" $common/>');
         case DrawingElementType.ellipse:
           out.write('<ellipse cx="${(e.left + e.right) / 2}" cy="${(e.top + e.bottom) / 2}" rx="${e.width.abs() / 2}" ry="${e.height.abs() / 2}" fill="$fill" $common/>');
         case DrawingElementType.diamond:
@@ -98,7 +98,7 @@ class DocumentExport {
           final lines = e.text.split('\n');
           final anchor = e.textAlign == 'center' ? 'middle' : e.textAlign == 'right' ? 'end' : 'start';
           final x = e.textAlign == 'center' ? e.x + e.width / 2 : e.textAlign == 'right' ? e.x + e.width : e.x;
-          out.write('<text x="$x" y="${e.y + e.fontSize}" fill="$stroke" font-family="${_xml(e.fontFamily)}" font-size="${e.fontSize}" text-anchor="$anchor" opacity="${e.opacity}">');
+          out.write('<text x="$x" y="${e.y + e.fontSize}" fill="$stroke" font-family="${_xml(e.fontFamily)}" font-size="${e.fontSize}" text-anchor="$anchor" opacity="${e.strokeOpacity}">');
           for (var i = 0; i < lines.length; i++) {
             out.write('<tspan x="$x" dy="${i == 0 ? 0 : e.fontSize * 1.2}">${_xml(lines[i])}</tspan>');
           }
@@ -111,7 +111,7 @@ class DocumentExport {
 
   static void _paintElement(Canvas canvas, DrawingElement e) {
     final stroke = Paint()
-      ..color = Color(e.strokeColor).withValues(alpha: e.opacity)
+      ..color = Color(e.strokeColor).withValues(alpha: e.strokeOpacity)
       ..style = PaintingStyle.stroke
       ..strokeWidth = e.strokeWidth
       ..strokeCap = StrokeCap.round
@@ -119,7 +119,7 @@ class DocumentExport {
     if (e.type == DrawingElementType.text) {
       final painter = TextPainter(
         text: TextSpan(text: e.text, style: TextStyle(
-          color: Color(e.strokeColor).withValues(alpha: e.opacity),
+          color: Color(e.strokeColor).withValues(alpha: e.fillOpacity),
           fontSize: e.fontSize, fontFamily: e.fontFamily, height: 1.2,
         )),
         textDirection: TextDirection.ltr,
