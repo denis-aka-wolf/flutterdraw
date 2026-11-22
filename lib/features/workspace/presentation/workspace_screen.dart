@@ -10,6 +10,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../infrastructure/serialization/draw_document_codec.dart';
+import '../../../infrastructure/serialization/excalidraw_codec.dart';
+import '../../../infrastructure/export/document_export.dart';
 
 import '../../../application/canvas/canvas_editor_controller.dart';
 import '../../../application/canvas/canvas_tool.dart';
@@ -28,6 +30,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   late final CanvasEditorController _controller;
   static const _autosaveKey = 'flutterdraw_autosave_v1';
   final _codec = const DrawDocumentCodec();
+  final _excalidrawCodec = const ExcalidrawCodec();
   Timer? _autosaveTimer;
   String _documentTitle = 'Без названия';
   String? _documentPath;
@@ -191,7 +194,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['flutterdraw'],
+        allowedExtensions: ['flutterdraw', 'excalidraw', 'json'],
         withData: true,
       );
       if (result == null || result.files.isEmpty) {
@@ -202,9 +205,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       if (bytes == null) {
         throw const FormatException('Не удалось прочитать содержимое файла.');
       }
-      final document = _codec.decode(utf8.decode(bytes));
+      final source = utf8.decode(bytes);
+      final decoded = jsonDecode(source);
+      final isNativeDocument = decoded is Map && decoded['type'] == DrawDocumentCodec.formatType;
+      final document = isNativeDocument
+          ? _codec.decode(source)
+          : _excalidrawCodec.decode(source);
       _controller.loadDocument(document);
-      _documentPath = kIsWeb ? null : file.path;
+      // Excalidraw imports are converted to the native model. Keep the source
+      // file intact and require Save As for the first native save.
+      _documentPath = kIsWeb || !file.name.toLowerCase().endsWith('.flutterdraw')
+          ? null
+          : file.path;
       _savedContent = _codec.encode(document, pretty: false);
       setState(() {
         _documentTitle = file.name;
@@ -317,6 +329,85 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
   }
 
+  Future<void> _exportPng() async {
+    try {
+      final bytes = await DocumentExport.png(_controller.document);
+      await _saveExport(
+        bytes: bytes,
+        extension: 'png',
+        dialogTitle: 'Экспортировать PNG',
+        successMessage: 'PNG экспортирован',
+      );
+    } catch (error) {
+      _showExportError(error);
+    }
+  }
+
+  Future<void> _exportSvg() async {
+    try {
+      final bytes = Uint8List.fromList(
+        utf8.encode(DocumentExport.svg(_controller.document)),
+      );
+      await _saveExport(
+        bytes: bytes,
+        extension: 'svg',
+        dialogTitle: 'Экспортировать SVG',
+        successMessage: 'SVG экспортирован',
+      );
+    } catch (error) {
+      _showExportError(error);
+    }
+  }
+
+  Future<void> _exportExcalidraw() async {
+    try {
+      final bytes = Uint8List.fromList(
+        utf8.encode(_excalidrawCodec.encode(_controller.document)),
+      );
+      await _saveExport(
+        bytes: bytes,
+        extension: 'excalidraw',
+        dialogTitle: 'Экспортировать Excalidraw',
+        successMessage: 'Документ Excalidraw экспортирован',
+      );
+    } catch (error) {
+      _showExportError(error);
+    }
+  }
+
+  Future<void> _saveExport({
+    required Uint8List bytes,
+    required String extension,
+    required String dialogTitle,
+    required String successMessage,
+  }) async {
+    final baseName = _documentTitle == 'Без названия'
+        ? 'FlutterDraw'
+        : _documentTitle.replaceFirst(
+            RegExp(r'\.(flutterdraw|excalidraw)$', caseSensitive: false),
+            '',
+          );
+    final savedPath = await FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: '$baseName.$extension',
+      type: FileType.custom,
+      allowedExtensions: [extension],
+      bytes: bytes,
+    );
+    if (savedPath == null || !mounted) return;
+    final fileName = savedPath.split(RegExp(r'[/\\]')).last;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$successMessage: $fileName')),
+    );
+  }
+
+  void _showExportError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Не удалось выполнить экспорт: $error')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Focus(
@@ -332,6 +423,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onOpen: _openDocument,
               onSave: _saveDocument,
               onSaveAs: _saveDocumentAs,
+              onExportPng: _exportPng,
+              onExportSvg: _exportSvg,
+              onExportExcalidraw: _exportExcalidraw,
               saveStatus: _saveStatus,
             ),
             Expanded(
@@ -415,6 +509,9 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onOpen,
     required this.onSave,
     required this.onSaveAs,
+    required this.onExportPng,
+    required this.onExportSvg,
+    required this.onExportExcalidraw,
     required this.saveStatus,
   });
 
@@ -424,6 +521,9 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onSave;
   final VoidCallback onSaveAs;
+  final VoidCallback onExportPng;
+  final VoidCallback onExportSvg;
+  final VoidCallback onExportExcalidraw;
   final String saveStatus;
 
   @override
@@ -470,6 +570,15 @@ class _WorkspaceHeader extends StatelessWidget {
                 case 'saveAs':
                   onSaveAs();
                   break;
+                case 'exportPng':
+                  onExportPng();
+                  break;
+                case 'exportSvg':
+                  onExportSvg();
+                  break;
+                case 'exportExcalidraw':
+                  onExportExcalidraw();
+                  break;
               }
             },
             itemBuilder: (context) => const [
@@ -508,6 +617,31 @@ class _WorkspaceHeader extends StatelessWidget {
                   leading: Icon(Icons.save_as_outlined),
                   title: Text('Сохранить как…'),
                   trailing: Text('Ctrl+Shift+S'),
+                ),
+              ),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'exportPng',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.image_outlined),
+                  title: Text('Экспорт PNG…'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'exportSvg',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.gesture_outlined),
+                  title: Text('Экспорт SVG…'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'exportExcalidraw',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.sync_alt),
+                  title: Text('Экспорт Excalidraw…'),
                 ),
               ),
             ],
