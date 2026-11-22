@@ -844,6 +844,52 @@ class CanvasEditorController extends ChangeNotifier {
         left = pointer.x;
         break;
     }
+    if (original.type == DrawingElementType.image && _lockImageAspectRatio) {
+      const minimumSize = 1.0;
+      final originalWidth = original.width.abs().clamp(minimumSize, double.infinity);
+      final originalHeight = original.height.abs().clamp(minimumSize, double.infinity);
+      final aspectRatio = originalWidth / originalHeight;
+      final rawWidth = (right - left).abs();
+      final rawHeight = (bottom - top).abs();
+      final isHorizontalEdge = handle == ResizeHandle.middleLeft ||
+          handle == ResizeHandle.middleRight;
+      final isVerticalEdge = handle == ResizeHandle.topCenter ||
+          handle == ResizeHandle.bottomCenter;
+      final scale = isHorizontalEdge
+          ? rawWidth / originalWidth
+          : isVerticalEdge
+              ? rawHeight / originalHeight
+              : math.max(
+                  rawWidth / originalWidth,
+                  rawHeight / originalHeight,
+                );
+      final width = (originalWidth * scale).clamp(minimumSize, 10000.0);
+      final height = (width / aspectRatio).clamp(minimumSize, 10000.0);
+
+      if (handle == ResizeHandle.middleLeft ||
+          handle == ResizeHandle.topLeft ||
+          handle == ResizeHandle.bottomLeft) {
+        left = original.right - width;
+        right = original.right;
+      } else {
+        left = original.left;
+        right = original.left + width;
+      }
+
+      if (isHorizontalEdge) {
+        top = original.centerY - height / 2;
+        bottom = original.centerY + height / 2;
+      } else if (handle == ResizeHandle.topLeft ||
+          handle == ResizeHandle.topCenter ||
+          handle == ResizeHandle.topRight) {
+        top = original.bottom - height;
+        bottom = original.bottom;
+      } else {
+        top = original.top;
+        bottom = original.top + height;
+      }
+    }
+
     _document = _document.replaceElement(original.copyWith(
       x: left,
       y: top,
