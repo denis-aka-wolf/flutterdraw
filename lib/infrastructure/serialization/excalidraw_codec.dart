@@ -113,6 +113,7 @@ class ExcalidrawCodec {
       'arrow' => DrawingElementType.arrow,
       'freedraw' => DrawingElementType.freehand,
       'text' => DrawingElementType.text,
+      'image' => DrawingElementType.image,
       _ => null,
     };
     if (type == null) return null;
@@ -151,6 +152,7 @@ class ExcalidrawCodec {
       strokeOpacity: (_number(raw['flutterdrawStrokeOpacity'], _number(raw['opacity'], 100)) / 100).clamp(0.0, 1.0).toDouble(),
       fillOpacity: (_number(raw['flutterdrawFillOpacity'], _number(raw['opacity'], 100)) / 100).clamp(0.0, 1.0).toDouble(),
       text: raw['text'] is String ? raw['text']! as String : '',
+      assetId: raw['fileId'] is String ? raw['fileId']! as String : null,
       fontSize: _number(raw['fontSize'], 24),
       fontFamily: _fontFamily(raw['fontFamily']),
       textAlign: raw['textAlign'] is String ? raw['textAlign']! as String : 'left',
@@ -196,6 +198,11 @@ class ExcalidrawCodec {
       result['verticalAlign'] = original['verticalAlign'] ?? 'top';
       result['baseline'] = original['baseline'] ?? element.fontSize;
     }
+    if (element.type == DrawingElementType.image && element.assetId != null) {
+      result['fileId'] = element.assetId;
+      result['status'] = 'saved';
+      result['scale'] = original['scale'] ?? [1, 1];
+    }
     if (groupId is String && groupId.isNotEmpty) {
       result['groupIds'] = [groupId];
     } else {
@@ -212,6 +219,7 @@ class ExcalidrawCodec {
     DrawingElementType.arrow => 'arrow',
     DrawingElementType.freehand => 'freedraw',
     DrawingElementType.text => 'text',
+    DrawingElementType.image => 'image',
   };
   static double _number(Object? value, [double fallback = 0]) =>
       value is num && value.isFinite ? value.toDouble() : fallback;
