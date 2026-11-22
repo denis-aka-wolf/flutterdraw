@@ -9,6 +9,7 @@ The workspace is organized around four areas:
 - **Canvas:** the drawing surface. The grid adapts to the current zoom level.
 - **Tool rail:** select, hand, rectangle, ellipse, diamond, line, arrow, text and freehand tools.
 - **Inspector:** edit the selected element's stroke, fill, opacity and text properties.
+- **Image import:** use **Файл → Добавить изображение…** to embed a local image in the document.
 - **Help overlay:** open the translucent "Подсказка" panel in the upper-right corner of the canvas. The panel can be resized from its lower-left handle; its size is remembered between launches.
 
 ## Drawing and navigation
@@ -20,6 +21,8 @@ The workspace is organized around four areas:
 5. Use the hand tool, Space + drag, or the middle mouse button to pan the canvas.
 6. Use the mouse wheel to zoom around the pointer.
 
+Imported images are stored inside the document, so the `.flutterdraw` file does not depend on the original image path. Select an image to move or resize it; adjust its opacity in the inspector.
+
 The inspector changes according to the selected element. Shape outlines and fills have independent opacity controls; changing one does not affect the other. Text has its own opacity control. Text can also be edited directly on the canvas by double-clicking it. Right-click the canvas or an object to open the context menu. It includes clipboard, grouping, alignment, z-order and delete actions.
 
 ## Documents and files
@@ -30,8 +33,9 @@ Use the **Файл** menu in the top bar or the keyboard shortcuts below.
 - **Open:** opens a `.flutterdraw` document or an Excalidraw `.excalidraw` / JSON file. Imported Excalidraw files are converted into the native editing model; the original file is not overwritten by Save.
 - **Save:** writes changes to the currently opened/saved file. If the document has no file path yet, Save opens the save dialog.
 - **Save as:** opens the platform save dialog and saves a separate `.flutterdraw` file.
-- **Export PNG:** renders the complete document bounds to a transparent PNG at 2× resolution, regardless of the current viewport.
-- **Export SVG:** writes the document's vector geometry and text as an SVG file.
+- **Add image:** imports a local image and embeds its bytes in the document.
+- **Export PNG:** renders the complete document bounds, including embedded images, to a transparent PNG at 2× resolution, regardless of the current viewport.
+- **Export SVG:** writes the document's vector geometry, text and embedded images as an SVG file.
 - **Export Excalidraw:** exports supported FlutterDraw elements to Excalidraw JSON. Unsupported imported records and preserved metadata are included where the codec can retain them.
 
 When creating a new document or opening another one, FlutterDraw asks for confirmation if the current document has unsaved changes.
@@ -82,12 +86,12 @@ On macOS, use Command where the shortcut is written as Ctrl/Cmd.
 
 ## Current format and compatibility
 
-The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. When opening an Excalidraw file, FlutterDraw converts supported elements into its editing model. The source file is left untouched; use **Save as** to create a native `.flutterdraw` copy. Common shapes, lines, arrows, freehand strokes, text and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips, but unsupported elements such as images are not rendered or editable in FlutterDraw.
+The native `.flutterdraw` file is a JSON document handled by FlutterDraw's own codec. Excalidraw `.excalidraw` and JSON files can be imported and exported for supported element types. When opening an Excalidraw file, FlutterDraw converts supported elements into its editing model. The source file is left untouched; use **Save as** to create a native `.flutterdraw` copy. Common shapes, lines, arrows, freehand strokes, text, images, embedded image files and group membership are mapped to FlutterDraw elements. Unknown fields and unsupported element records are retained for round trips.
 
 ## Known limitations
 
-- Image elements are not available yet. SVG export uses clean vector geometry and does not reproduce the editor's seeded sketch jitter exactly.
+- Imported image formats depend on Flutter's image decoder. SVG export uses clean vector geometry and does not reproduce the editor's seeded sketch jitter exactly.
 - Autosave recovery is local to the application installation/profile. It is not cloud synchronization.
 - The current file workflow should be treated as an early implementation; keep backups of important documents.
 - PNG/SVG exports contain the current document geometry, not the canvas viewport, selection handles, grid or editor overlays.
-- Imported Excalidraw image elements may be preserved as unsupported records but are not displayed or editable.
+
