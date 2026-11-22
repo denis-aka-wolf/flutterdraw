@@ -211,7 +211,7 @@ class _CanvasViewportState extends State<CanvasViewport> {
       height: element.height * _transform.scale,
       child: IgnorePointer(
         child: Opacity(
-          opacity: element.fillOpacity.clamp(0.0, 1.0),
+          opacity: element.fillOpacity.clamp(0.0, 1.0).toDouble(),
           child: Image.memory(
             Uint8List.fromList(asset.bytes),
             fit: BoxFit.fill,
