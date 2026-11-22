@@ -31,6 +31,19 @@ void main() {
       expect(DocumentExport.bounds(DrawDocument()), const Rect.fromLTWH(0, 0, 1, 1));
     });
 
+    test('exports a PNG image with a valid signature', () async {
+      final document = DrawDocument(elements: [
+        DrawingElement(
+          id: 'rect', type: DrawingElementType.rectangle,
+          x: 0, y: 0, width: 40, height: 30, seed: 1,
+        ),
+      ]);
+
+      final bytes = await DocumentExport.png(document, pixelRatio: 1);
+
+      expect(bytes.take(8).toList(), [137, 80, 78, 71, 13, 10, 26, 10]);
+    });
+
     test('exports SVG geometry, styling and escaped text', () {
       final document = DrawDocument(elements: [
         DrawingElement(
