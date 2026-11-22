@@ -10,6 +10,8 @@ enum DrawingElementType {
   text,
 }
 
+enum StrokeAlignment { center, inside, outside }
+
 class DrawingElement {
   DrawingElement({
     required this.id,
@@ -22,6 +24,7 @@ class DrawingElement {
     List<Point2> points = const [],
     this.strokeColor = 0xFF252525,
     this.strokeWidth = 2,
+    this.strokeAlignment = StrokeAlignment.center,
     this.roughness = 1,
     this.text = '',
     this.fontSize = 24,
@@ -43,6 +46,7 @@ class DrawingElement {
   final List<Point2> points;
   final int strokeColor;
   final double strokeWidth;
+  final StrokeAlignment strokeAlignment;
   final double roughness;
   final String text;
   final double fontSize;
@@ -135,6 +139,7 @@ class DrawingElement {
     List<Point2>? points,
     int? strokeColor,
     double? strokeWidth,
+    StrokeAlignment? strokeAlignment,
     double? roughness,
     String? text,
     double? fontSize,
@@ -155,6 +160,7 @@ class DrawingElement {
       points: points ?? this.points,
       strokeColor: strokeColor ?? this.strokeColor,
       strokeWidth: strokeWidth ?? this.strokeWidth,
+      strokeAlignment: strokeAlignment ?? this.strokeAlignment,
       roughness: roughness ?? this.roughness,
       text: text ?? this.text,
       fontSize: fontSize ?? this.fontSize,
