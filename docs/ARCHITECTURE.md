@@ -153,7 +153,8 @@ Shared domain, application, geometry, serialization, and rendering code. Platfor
 ### M3: Documents
 - [x] Native FlutterDraw JSON format.
 - [x] New/open/save workflow and local autosave recovery.
-- [ ] Excalidraw import/export and fixture suite.
+- [x] Basic Excalidraw JSON import/export for supported elements, preserving unknown metadata and unsupported records.
+- [x] PNG and SVG document export.
 - [x] Reorderable layers panel, grid snapping and smart alignment guides.
 
 ### M4: Sketch renderer
