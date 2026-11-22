@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+
+import '../../../infrastructure/files/document_file_writer.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -28,6 +31,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _codec = const DrawDocumentCodec();
   Timer? _autosaveTimer;
   String _documentTitle = 'Без названия';
+  String? _documentPath;
   bool _restoringSession = false;
   String? _lastAutosavedContent;
   String? _lastAutosavedTitle;
@@ -106,6 +110,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             : 'Без названия';
       });
       _controller.loadDocument(document);
+      _documentPath = null;
       _lastAutosavedContent = _codec.encode(document, pretty: false);
       _lastAutosavedTitle = _documentTitle;
       _savedContent = null;
@@ -121,6 +126,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (!await _confirmDiscardChanges()) return;
     _autosaveTimer?.cancel();
     _controller.newDocument();
+    _documentPath = null;
     _savedContent = _codec.encode(_controller.document, pretty: false);
     setState(() {
       _documentTitle = 'Без названия';
@@ -170,7 +176,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         _openDocument();
         return KeyEventResult.handled;
       case LogicalKeyboardKey.keyS:
-        _saveDocument();
+        if (HardwareKeyboard.instance.isShiftPressed) {
+          _saveDocumentAs();
+        } else {
+          _saveDocument();
+        }
         return KeyEventResult.handled;
       default:
         return KeyEventResult.ignored;
@@ -195,6 +205,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       }
       final document = _codec.decode(utf8.decode(bytes));
       _controller.loadDocument(document);
+      _documentPath = kIsWeb ? null : file.path;
       _savedContent = _codec.encode(document, pretty: false);
       setState(() {
         _documentTitle = file.name;
@@ -214,9 +225,48 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 
   Future<void> _saveDocument() async {
-    if (_isSaving) {
+    if (_documentPath == null || kIsWeb) {
+      await _saveDocumentAs();
       return;
     }
+    if (_isSaving) return;
+    setState(() {
+      _isSaving = true;
+      _saveStatus = 'Сохранение…';
+    });
+    try {
+      final content = _codec.encode(_controller.document);
+      final bytes = Uint8List.fromList(utf8.encode(content));
+      await writeDocumentFile(_documentPath!, bytes);
+      _savedContent = _codec.encode(_controller.document, pretty: false);
+      final fileName = _documentPath!.split(RegExp(r'[/\\\\]')).last;
+      if (mounted) {
+        setState(() => _saveStatus = 'Сохранено');
+      }
+      _lastAutosavedContent = null;
+      _lastAutosavedTitle = null;
+      await _writeAutosave();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Документ сохранён: $fileName')),
+      );
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось сохранить документ: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено';
+        });
+      }
+    }
+  }
+
+  Future<void> _saveDocumentAs() async {
+    if (_isSaving) return;
     setState(() {
       _isSaving = true;
       _saveStatus = 'Сохранение…';
@@ -236,36 +286,35 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         allowedExtensions: ['flutterdraw'],
         bytes: bytes,
       );
-      if (savedPath == null) {
-        return;
-      }
+      if (savedPath == null) return;
       final fileName = savedPath.split(RegExp(r'[/\\\\]')).last;
+      if (!kIsWeb) _documentPath = savedPath;
       _savedContent = _codec.encode(_controller.document, pretty: false);
-      if (mounted) setState(() {
-        _documentTitle = fileName;
-        _saveStatus = 'Сохранено';
-      });
+      if (mounted) {
+        setState(() {
+          _documentTitle = fileName;
+          _saveStatus = 'Сохранено';
+        });
+      }
       _lastAutosavedContent = null;
       _lastAutosavedTitle = null;
       await _writeAutosave();
-      if (!mounted) {
-      return;
-    }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Документ сохранён: $fileName')),
       );
     } on Object catch (error) {
-      if (!mounted) {
-      return;
-    }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Не удалось сохранить документ: $error')),
       );
     } finally {
-      if (mounted) setState(() {
-        _isSaving = false;
-        _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено';
-      });
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _saveStatus = _hasUnsavedChanges ? 'Есть изменения' : 'Сохранено';
+        });
+      }
     }
   }
 
@@ -283,6 +332,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onNew: _newDocument,
               onOpen: _openDocument,
               onSave: _saveDocument,
+              onSaveAs: _saveDocumentAs,
               saveStatus: _saveStatus,
             ),
             Expanded(
@@ -331,6 +381,7 @@ class _WorkspaceHeader extends StatelessWidget {
     required this.onNew,
     required this.onOpen,
     required this.onSave,
+    required this.onSaveAs,
     required this.saveStatus,
   });
 
@@ -339,6 +390,7 @@ class _WorkspaceHeader extends StatelessWidget {
   final VoidCallback onNew;
   final VoidCallback onOpen;
   final VoidCallback onSave;
+  final VoidCallback onSaveAs;
   final String saveStatus;
 
   @override
@@ -382,6 +434,9 @@ class _WorkspaceHeader extends StatelessWidget {
                 case 'save':
                   onSave();
                   break;
+                case 'saveAs':
+                  onSaveAs();
+                  break;
               }
             },
             itemBuilder: (context) => const [
@@ -411,6 +466,15 @@ class _WorkspaceHeader extends StatelessWidget {
                   leading: Icon(Icons.save_outlined),
                   title: Text('Сохранить'),
                   trailing: Text('Ctrl+S'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'saveAs',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.save_as_outlined),
+                  title: Text('Сохранить как…'),
+                  trailing: Text('Ctrl+Shift+S'),
                 ),
               ),
             ],
