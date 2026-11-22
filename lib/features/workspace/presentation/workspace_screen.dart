@@ -883,6 +883,24 @@ class _InspectorPanel extends StatelessWidget {
                   const SizedBox(height: 14),
                 ],
                 if (element.type != DrawingElementType.text) ...[
+                  if (element.type == DrawingElementType.rectangle ||
+                      element.type == DrawingElementType.ellipse ||
+                      element.type == DrawingElementType.diamond) ...[
+                    _section(context, 'Положение обводки'),
+                    SegmentedButton<StrokeAlignment>(
+                      segments: const [
+                        ButtonSegment(value: StrokeAlignment.inside, label: Text('Внутри')),
+                        ButtonSegment(value: StrokeAlignment.center, label: Text('Центр')),
+                        ButtonSegment(value: StrokeAlignment.outside, label: Text('Снаружи')),
+                      ],
+                      selected: {element.strokeAlignment},
+                      onSelectionChanged: (values) =>
+                          controller.updateSelectedProperties(
+                        strokeAlignment: values.first,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _section(context, 'Толщина линии: ${element.strokeWidth.toStringAsFixed(1)}'),
                   Slider(
                     min: 0.5, max: 12, divisions: 23,
