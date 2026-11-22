@@ -19,6 +19,21 @@ class DrawDocument {
   DrawDocument addElement(DrawingElement element) =>
       DrawDocument(elements: [...elements, element], assets: assets, extraData: extraData);
 
+  DrawDocument addAsset(DocumentAsset asset) => DrawDocument(
+        elements: elements,
+        assets: {...assets, asset.id: asset},
+        extraData: extraData,
+      );
+
+  DrawDocument removeAsset(String assetId) {
+    final nextAssets = Map<String, DocumentAsset>.from(assets)..remove(assetId);
+    return DrawDocument(
+      elements: elements,
+      assets: nextAssets,
+      extraData: extraData,
+    );
+  }
+
   DrawDocument removeElements(Set<String> ids) => DrawDocument(
         elements: elements.where((element) => !ids.contains(element.id)).toList(),
         assets: assets,
