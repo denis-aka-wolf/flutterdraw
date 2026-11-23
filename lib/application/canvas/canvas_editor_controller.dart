@@ -793,13 +793,6 @@ class CanvasEditorController extends ChangeNotifier {
     ];
     if (selectedIndexes.isEmpty) return;
 
-    final selectionBounds = SelectionBounds(
-      selected.map((e) => e.left).reduce(math.min).toDouble(),
-      selected.map((e) => e.top).reduce(math.min).toDouble(),
-      selected.map((e) => e.right).reduce(math.max).toDouble(),
-      selected.map((e) => e.bottom).reduce(math.max).toDouble(),
-    );
-
     final edgeIndex = forward
         ? selectedIndexes.reduce(math.max)
         : selectedIndexes.reduce(math.min);
@@ -809,7 +802,15 @@ class CanvasEditorController extends ChangeNotifier {
         final candidate = elements[i];
         if (_selectedIds.contains(candidate.id)) continue;
         if (_relativeLayerMovement &&
-            !_intersects(candidate, selectionBounds)) {
+            !selected.any((element) => _intersects(
+              candidate,
+              SelectionBounds(
+                element.left,
+                element.top,
+                element.right,
+                element.bottom,
+              ),
+            ))) {
           continue;
         }
         target = candidate;
