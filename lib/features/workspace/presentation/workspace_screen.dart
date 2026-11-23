@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../infrastructure/files/document_file_writer.dart';
 import 'dart:convert';
+import 'dart:ui' show Rect;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -377,12 +378,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _exportPng() async {
     try {
-      final bytes = await DocumentExport.png(_controller.document);
+      final selection = _controller.selectionBounds;
+      final cropBounds = selection == null
+          ? null
+          : Rect.fromLTRB(
+              selection.left,
+              selection.top,
+              selection.right,
+              selection.bottom,
+            );
+      final bytes = await DocumentExport.png(
+        _controller.document,
+        cropBounds: cropBounds,
+      );
       await _saveExport(
         bytes: bytes,
         extension: 'png',
-        dialogTitle: 'Экспортировать PNG',
-        successMessage: 'PNG экспортирован',
+        dialogTitle: selection == null
+            ? 'Экспортировать PNG'
+            : 'Экспортировать выделение в PNG',
+        successMessage: selection == null
+            ? 'PNG экспортирован'
+            : 'Выделение экспортировано в PNG',
       );
     } catch (error) {
       _showExportError(error);
