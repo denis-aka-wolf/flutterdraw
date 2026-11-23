@@ -821,7 +821,15 @@ class CanvasEditorController extends ChangeNotifier {
         final candidate = elements[i];
         if (_selectedIds.contains(candidate.id)) continue;
         if (_relativeLayerMovement &&
-            !_intersects(candidate, selectionBounds)) {
+            !selected.any((element) => _intersects(
+              candidate,
+              SelectionBounds(
+                element.left,
+                element.top,
+                element.right,
+                element.bottom,
+              ),
+            ))) {
           continue;
         }
         target = candidate;
