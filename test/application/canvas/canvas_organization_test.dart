@@ -167,6 +167,21 @@ void main() {
       controller.dispose();
     });
 
+    test('does not treat the empty gap between selected objects as overlap', () {
+      final controller = CanvasEditorController()
+        ..loadDocument(DrawDocument(elements: [
+          rect('selected-a', 0, 0, 20, 20),
+          rect('gap-object', 40, 0, 20, 20),
+          rect('selected-b', 80, 0, 20, 20),
+        ]));
+      controller.selectElementById('selected-a');
+      controller.selectElementById('selected-b', additive: true);
+      controller.moveSelectionUp();
+      expect(controller.document.elements.map((e) => e.id).toList(),
+          ['selected-a', 'gap-object', 'selected-b']);
+      controller.dispose();
+    });
+
     test('moves a multi-selection as one block', () {
       final controller = CanvasEditorController()
         ..loadDocument(DrawDocument(elements: [
