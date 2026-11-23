@@ -752,7 +752,10 @@ class _CanvasPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
         textAlign: _textAlignFor(element.textAlign),
-      )..layout(maxWidth: math.max(40.0, element.width));
+      )..layout(
+        minWidth: math.max(40.0, element.width),
+        maxWidth: math.max(40.0, element.width),
+      );
       canvas.save();
       canvas.clipRect(
           Rect.fromLTWH(element.x, element.y, element.width, element.height));
