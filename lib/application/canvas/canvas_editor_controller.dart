@@ -54,6 +54,7 @@ class CanvasEditorController extends ChangeNotifier {
   int _idCounter = 0;
 
   final Set<String> _selectedIds = {};
+  SelectionBounds? _selectionAreaBounds;
   final List<DrawingElement> _clipboard = [];
   Point2? _gestureStart;
   Point2? _marqueeEnd;
@@ -112,6 +113,11 @@ class CanvasEditorController extends ChangeNotifier {
     );
   }
 
+  /// Bounds of the most recent marquee selection, retained for image export.
+  /// Falls back to the selected elements' bounds for click-based selection.
+  SelectionBounds? get exportSelectionBounds =>
+      _selectionAreaBounds ?? selectionBounds;
+
   SelectionBounds? get marqueeBounds {
     final start = _gestureStart;
     final end = _marqueeEnd;
@@ -132,6 +138,7 @@ class CanvasEditorController extends ChangeNotifier {
     _historyIndex = 0;
     _lastHistoryMergeKey = null;
     _selectedIds.clear();
+    _selectionAreaBounds = null;
     _clipboard.clear();
     _idCounter = 0;
     _groupCounter = 0;
@@ -349,6 +356,7 @@ class CanvasEditorController extends ChangeNotifier {
     _selectedIds
       ..clear()
       ..addAll(ids);
+    _selectionAreaBounds = null;
     notifyListeners();
     return hit;
   }
@@ -430,6 +438,7 @@ class CanvasEditorController extends ChangeNotifier {
 
     final hit = _hitTest(worldPosition, hitTolerance);
     if (hit != null) {
+      _selectionAreaBounds = null;
       final groupId = hit.extraData['flutterdrawGroupId'];
       final hitIds = groupId is String
           ? _document.elements
@@ -454,6 +463,7 @@ class CanvasEditorController extends ChangeNotifier {
         _isMoving = true;
       }
     } else {
+      _selectionAreaBounds = null;
       if (!additiveSelection) _selectedIds.clear();
       _gestureStart = worldPosition;
       _marqueeEnd = worldPosition;
@@ -540,6 +550,7 @@ class CanvasEditorController extends ChangeNotifier {
     if (isMarqueeSelecting) {
       _marqueeEnd = worldPosition;
       final bounds = marqueeBounds;
+      _selectionAreaBounds = bounds;
       if (bounds != null) {
         final matches = _document.elements
             .where((element) => _intersects(element, bounds))
