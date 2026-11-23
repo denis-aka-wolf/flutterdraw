@@ -732,6 +732,26 @@ class _WorkspaceHeader extends StatelessWidget {
             onPressed: controller.duplicateSelection,
             icon: const Icon(Icons.copy_all_outlined),
           ),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) => IconButton(
+              tooltip: controller.relativeLayerMovement
+                  ? 'Выше среди перекрывающих объектов'
+                  : 'Выше на один слой',
+              onPressed: controller.moveSelectionUp,
+              icon: const Icon(Icons.arrow_upward),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) => IconButton(
+              tooltip: controller.relativeLayerMovement
+                  ? 'Ниже среди перекрывающих объектов'
+                  : 'Ниже на один слой',
+              onPressed: controller.moveSelectionDown,
+              icon: const Icon(Icons.arrow_downward),
+            ),
+          ),
           IconButton(
             tooltip: 'На передний план (Ctrl+])',
             onPressed: controller.bringSelectionToFront,
@@ -1321,6 +1341,13 @@ class _LayersPanel extends StatelessWidget {
                   Text('${layers.length}',
                       style: Theme.of(context).textTheme.labelSmall),
                 ]),
+                SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Перемещать среди перекрывающих'),
+                    subtitle: const Text('Игнорировать остальные объекты'),
+                    value: controller.relativeLayerMovement,
+                    onChanged: controller.setRelativeLayerMovement),
                 SwitchListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
