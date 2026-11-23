@@ -89,6 +89,8 @@ void main() {
       expect(controller.exportSelectionBounds?.right, 210);
       expect(controller.exportSelectionBounds?.bottom, 150);
 
+      controller.pointerDown(const Point2(300, 300));
+      controller.pointerUp(const Point2(300, 300));
       controller.pointerDown(const Point2(50, 60));
       controller.pointerUp(const Point2(50, 60));
 
