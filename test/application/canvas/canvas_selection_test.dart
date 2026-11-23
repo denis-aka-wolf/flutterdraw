@@ -73,6 +73,34 @@ void main() {
       controller.dispose();
     });
 
+    test('retains marquee bounds for export and falls back to object bounds', () {
+      final controller = makeControllerWithRectangle();
+      controller.setActiveTool(CanvasTool.ellipse);
+      controller.pointerDown(const Point2(140, 20));
+      controller.pointerUp(const Point2(180, 60));
+      controller.setActiveTool(CanvasTool.select);
+
+      controller.pointerDown(const Point2(-10, -20));
+      controller.pointerMove(const Point2(210, 150));
+      controller.pointerUp(const Point2(210, 150));
+
+      expect(controller.exportSelectionBounds?.left, -10);
+      expect(controller.exportSelectionBounds?.top, -20);
+      expect(controller.exportSelectionBounds?.right, 210);
+      expect(controller.exportSelectionBounds?.bottom, 150);
+
+      controller.pointerDown(const Point2(300, 300));
+      controller.pointerUp(const Point2(300, 300));
+      controller.pointerDown(const Point2(50, 60));
+      controller.pointerUp(const Point2(50, 60));
+
+      expect(controller.exportSelectionBounds?.left, 10);
+      expect(controller.exportSelectionBounds?.top, 20);
+      expect(controller.exportSelectionBounds?.right, 110);
+      expect(controller.exportSelectionBounds?.bottom, 120);
+      controller.dispose();
+    });
+
     test('shift-style marquee adds to the existing selection', () {
       final controller = makeControllerWithRectangle();
       controller.setActiveTool(CanvasTool.ellipse);

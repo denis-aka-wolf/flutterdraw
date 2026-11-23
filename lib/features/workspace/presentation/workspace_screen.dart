@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../infrastructure/files/document_file_writer.dart';
 import 'dart:convert';
-import 'dart:ui' show Rect;
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -378,7 +377,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   Future<void> _exportPng() async {
     try {
-      final selection = _controller.selectionBounds;
+      final selection = _controller.exportSelectionBounds;
       final cropBounds = selection == null
           ? null
           : Rect.fromLTRB(
