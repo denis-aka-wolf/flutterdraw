@@ -549,24 +549,23 @@ class _CanvasViewportState extends State<CanvasViewport> {
                       clipBehavior: Clip.hardEdge,
                       children: [
                         Positioned.fill(
-                            child: CustomPaint(
-                          painter: _CanvasPainter(
-                            transform: _transform,
-                            backgroundColor: backgroundColor,
-                            dotColor: dotColor,
-                            elements: widget.controller.document.elements,
-                            preview: widget.controller.drawingPreview,
-                            selection: widget.controller.selectionBounds,
-                            showResizeHandles:
-                                widget.controller.canResizeSelection,
-                            marquee: widget.controller.marqueeBounds,
-                            editingTextId: _editingTextId,
-                            alignmentGuidesX:
-                                widget.controller.alignmentGuidesX,
-                            alignmentGuidesY:
-                                widget.controller.alignmentGuidesY,
+                          child: CustomPaint(
+                            painter: _CanvasPainter(
+                              transform: _transform,
+                              backgroundColor: backgroundColor,
+                              dotColor: dotColor,
+                              elements: const [],
+                              preview: null,
+                              selection: null,
+                              showResizeHandles: false,
+                              marquee: null,
+                              editingTextId: _editingTextId,
+                              alignmentGuidesX: const [],
+                              alignmentGuidesY: const [],
+                              paintOverlay: false,
+                            ),
                           ),
-                        )),
+                        ),
                         for (final element
                             in widget.controller.document.elements)
                           if (element.type == DrawingElementType.image &&
@@ -574,7 +573,49 @@ class _CanvasViewportState extends State<CanvasViewport> {
                               widget.controller.document
                                       .assets[element.assetId] !=
                                   null)
-                            _buildImageElement(element),
+                            _buildImageElement(element)
+                          else
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: _CanvasPainter(
+                                  transform: _transform,
+                                  backgroundColor: backgroundColor,
+                                  dotColor: dotColor,
+                                  elements: [element],
+                                  preview: null,
+                                  selection: null,
+                                  showResizeHandles: false,
+                                  marquee: null,
+                                  editingTextId: _editingTextId,
+                                  alignmentGuidesX: const [],
+                                  alignmentGuidesY: const [],
+                                  paintBackground: false,
+                                  paintOverlay: false,
+                                ),
+                              ),
+                            ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _CanvasPainter(
+                              transform: _transform,
+                              backgroundColor: backgroundColor,
+                              dotColor: dotColor,
+                              elements: const [],
+                              preview: widget.controller.drawingPreview,
+                              selection: widget.controller.selectionBounds,
+                              showResizeHandles:
+                                  widget.controller.canResizeSelection,
+                              marquee: widget.controller.marqueeBounds,
+                              editingTextId: _editingTextId,
+                              alignmentGuidesX:
+                                  widget.controller.alignmentGuidesX,
+                              alignmentGuidesY:
+                                  widget.controller.alignmentGuidesY,
+                              paintBackground: false,
+                              paintElements: false,
+                            ),
+                          ),
+                        ),
                         if (_editingTextId != null) _buildInlineTextEditor(),
                       ],
                     );
@@ -608,6 +649,9 @@ class _CanvasPainter extends CustomPainter {
     required this.editingTextId,
     required this.alignmentGuidesX,
     required this.alignmentGuidesY,
+    this.paintBackground = true,
+    this.paintElements = true,
+    this.paintOverlay = true,
   });
 
   final ViewportTransform transform;
@@ -621,23 +665,35 @@ class _CanvasPainter extends CustomPainter {
   final String? editingTextId;
   final List<double> alignmentGuidesX;
   final List<double> alignmentGuidesY;
+  final bool paintBackground;
+  final bool paintElements;
+  final bool paintOverlay;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawColor(backgroundColor, BlendMode.src);
-    if (size.isEmpty) return;
-    _paintGrid(canvas, size);
-
-    canvas.save();
-    canvas.translate(transform.translation.x, transform.translation.y);
-    canvas.scale(transform.scale);
-    for (final element in elements) {
-      _paintElement(canvas, element);
+    if (paintBackground) {
+      canvas.drawColor(backgroundColor, BlendMode.src);
+      if (size.isEmpty) return;
+      _paintGrid(canvas, size);
     }
-    if (preview != null) _paintElement(canvas, preview!, opacity: 0.65);
-    if (selection != null) _paintSelection(canvas, selection!);
-    if (marquee != null) _paintMarquee(canvas, marquee!);
-    canvas.restore();
+
+    if (paintElements || paintOverlay) {
+      canvas.save();
+      canvas.translate(transform.translation.x, transform.translation.y);
+      canvas.scale(transform.scale);
+      if (paintElements) {
+        for (final element in elements) {
+          _paintElement(canvas, element);
+        }
+      }
+      if (paintOverlay) {
+        if (preview != null) _paintElement(canvas, preview!, opacity: 0.65);
+        if (selection != null) _paintSelection(canvas, selection!);
+        if (marquee != null) _paintMarquee(canvas, marquee!);
+      }
+      canvas.restore();
+    }
+    if (!paintOverlay) return;
     final guidePaint = Paint()
       ..color = const Color(0xFF12A6A0).withValues(alpha: 0.9)
       ..strokeWidth = 1;
@@ -968,5 +1024,8 @@ class _CanvasPainter extends CustomPainter {
       oldDelegate.showResizeHandles != showResizeHandles ||
       oldDelegate.marquee != marquee ||
       oldDelegate.alignmentGuidesX != alignmentGuidesX ||
-      oldDelegate.alignmentGuidesY != alignmentGuidesY;
+      oldDelegate.alignmentGuidesY != alignmentGuidesY ||
+      oldDelegate.paintBackground != paintBackground ||
+      oldDelegate.paintElements != paintElements ||
+      oldDelegate.paintOverlay != paintOverlay;
 }
