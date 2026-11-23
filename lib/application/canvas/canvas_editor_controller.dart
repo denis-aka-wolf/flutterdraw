@@ -794,8 +794,8 @@ class CanvasEditorController extends ChangeNotifier {
     if (selectedIndexes.isEmpty) return;
 
     final edgeIndex = forward
-        ? selectedIndexes.reduce(math.max)
-        : selectedIndexes.reduce(math.min);
+        ? selectedIndexes.reduce((a, b) => a > b ? a : b)
+        : selectedIndexes.reduce((a, b) => a < b ? a : b);
     DrawingElement? target;
     if (forward) {
       for (var i = edgeIndex + 1; i < elements.length; i++) {
