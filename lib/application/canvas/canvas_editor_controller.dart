@@ -553,7 +553,10 @@ class CanvasEditorController extends ChangeNotifier {
     if (isMarqueeSelecting) {
       _marqueeEnd = worldPosition;
       final bounds = marqueeBounds;
-      _selectionAreaBounds = bounds;
+      _selectionAreaBounds = bounds != null &&
+              bounds.width > 0 && bounds.height > 0
+          ? bounds
+          : null;
       if (bounds != null) {
         final matches = _document.elements
             .where((element) => _intersects(element, bounds))
@@ -742,7 +745,7 @@ class CanvasEditorController extends ChangeNotifier {
   }
 
   void clearSelection() {
-    if (_selectedIds.isEmpty) return;
+    if (_selectedIds.isEmpty && _selectionAreaBounds == null) return;
     _selectedIds.clear();
     _selectionAreaBounds = null;
     _clearGesture();
