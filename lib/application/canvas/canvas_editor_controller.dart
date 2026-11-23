@@ -54,6 +54,7 @@ class CanvasEditorController extends ChangeNotifier {
   int _idCounter = 0;
 
   final Set<String> _selectedIds = {};
+  SelectionBounds? _selectionAreaBounds;
   final List<DrawingElement> _clipboard = [];
   Point2? _gestureStart;
   Point2? _marqueeEnd;
@@ -112,6 +113,11 @@ class CanvasEditorController extends ChangeNotifier {
     );
   }
 
+  /// Bounds of the last marquee selection, retained for image export.
+  /// Click-based selections fall back to the selected objects' bounds.
+  SelectionBounds? get exportSelectionBounds =>
+      _selectionAreaBounds ?? selectionBounds;
+
   SelectionBounds? get marqueeBounds {
     final start = _gestureStart;
     final end = _marqueeEnd;
@@ -132,6 +138,7 @@ class CanvasEditorController extends ChangeNotifier {
     _historyIndex = 0;
     _lastHistoryMergeKey = null;
     _selectedIds.clear();
+    _selectionAreaBounds = null;
     _clipboard.clear();
     _idCounter = 0;
     _groupCounter = 0;
@@ -180,6 +187,7 @@ class CanvasEditorController extends ChangeNotifier {
       roughness: 0,
     );
     _document = _document.addElement(element);
+    _selectionAreaBounds = null;
     _selectedIds
       ..clear()
       ..add(element.id);
@@ -205,6 +213,7 @@ class CanvasEditorController extends ChangeNotifier {
       fillOpacity: 1,
     );
     _document = _document.addAsset(asset).addElement(element);
+    _selectionAreaBounds = null;
     _selectedIds
       ..clear()
       ..add(element.id);
@@ -349,6 +358,7 @@ class CanvasEditorController extends ChangeNotifier {
     _selectedIds
       ..clear()
       ..addAll(ids);
+    _selectionAreaBounds = null;
     notifyListeners();
     return hit;
   }
@@ -430,6 +440,7 @@ class CanvasEditorController extends ChangeNotifier {
 
     final hit = _hitTest(worldPosition, hitTolerance);
     if (hit != null) {
+      _selectionAreaBounds = null;
       final groupId = hit.extraData['flutterdrawGroupId'];
       final hitIds = groupId is String
           ? _document.elements
@@ -454,6 +465,7 @@ class CanvasEditorController extends ChangeNotifier {
         _isMoving = true;
       }
     } else {
+      _selectionAreaBounds = null;
       if (!additiveSelection) _selectedIds.clear();
       _gestureStart = worldPosition;
       _marqueeEnd = worldPosition;
@@ -528,6 +540,7 @@ class CanvasEditorController extends ChangeNotifier {
       _clearGesture();
       if (completed.isLargeEnough) {
         _document = _document.addElement(completed);
+        _selectionAreaBounds = null;
         _selectedIds
           ..clear()
           ..add(completed.id);
@@ -540,6 +553,7 @@ class CanvasEditorController extends ChangeNotifier {
     if (isMarqueeSelecting) {
       _marqueeEnd = worldPosition;
       final bounds = marqueeBounds;
+      _selectionAreaBounds = bounds;
       if (bounds != null) {
         final matches = _document.elements
             .where((element) => _intersects(element, bounds))
@@ -694,6 +708,7 @@ class CanvasEditorController extends ChangeNotifier {
         ..clear()
         ..addAll(ids);
     }
+    _selectionAreaBounds = null;
     notifyListeners();
   }
 
@@ -720,6 +735,7 @@ class CanvasEditorController extends ChangeNotifier {
     final before = _document;
     _document = _document.removeElements(_selectedIds);
     _selectedIds.clear();
+    _selectionAreaBounds = null;
     _clearGesture();
     _recordHistory(before);
     notifyListeners();
@@ -728,6 +744,7 @@ class CanvasEditorController extends ChangeNotifier {
   void clearSelection() {
     if (_selectedIds.isEmpty) return;
     _selectedIds.clear();
+    _selectionAreaBounds = null;
     _clearGesture();
     notifyListeners();
   }
@@ -762,6 +779,7 @@ class CanvasEditorController extends ChangeNotifier {
     _selectedIds
       ..clear()
       ..addAll(copies.map((element) => element.id));
+    _selectionAreaBounds = null;
     _recordHistory(before);
     notifyListeners();
   }
@@ -892,6 +910,7 @@ class CanvasEditorController extends ChangeNotifier {
 
   void _restoreHistoryDocument() {
     _document = _history[_historyIndex];
+    _selectionAreaBounds = null;
     final validIds = _document.elements.map((element) => element.id).toSet();
     _selectedIds.removeWhere((id) => !validIds.contains(id));
     _clearGesture();
