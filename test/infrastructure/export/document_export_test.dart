@@ -45,6 +45,55 @@ void main() {
           const Rect.fromLTWH(0, 0, 1, 1));
     });
 
+    test('keeps only elements fully contained in the selected bounds', () {
+      final document = DrawDocument(elements: [
+        DrawingElement(
+          id: 'selected',
+          type: DrawingElementType.rectangle,
+          x: 10,
+          y: 10,
+          width: 80,
+          height: 60,
+          seed: 1,
+        ),
+        DrawingElement(
+          id: 'inside',
+          type: DrawingElementType.ellipse,
+          x: 20,
+          y: 20,
+          width: 15,
+          height: 15,
+          seed: 2,
+        ),
+        DrawingElement(
+          id: 'partial',
+          type: DrawingElementType.rectangle,
+          x: 85,
+          y: 30,
+          width: 20,
+          height: 20,
+          seed: 3,
+        ),
+        DrawingElement(
+          id: 'outside',
+          type: DrawingElementType.rectangle,
+          x: 150,
+          y: 150,
+          width: 20,
+          height: 20,
+          seed: 4,
+        ),
+      ]);
+
+      final cropped = DocumentExport.withinBounds(
+        document,
+        const Rect.fromLTWH(10, 10, 80, 60),
+      );
+
+      expect(cropped.elements.map((element) => element.id),
+          ['selected', 'inside']);
+    });
+
     test('exports a PNG image with a valid signature', () async {
       final document = DrawDocument(elements: [
         DrawingElement(

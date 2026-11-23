@@ -38,9 +38,38 @@ class DocumentExport {
     return Rect.fromLTRB(left, top, right, bottom).inflate(stroke + padding);
   }
 
+  static DrawDocument withinBounds(DrawDocument document, Rect area) {
+    final elements = document.elements.where((element) {
+      var left = element.left;
+      var top = element.top;
+      var right = element.right;
+      var bottom = element.bottom;
+      for (final point in element.points) {
+        left = math.min(left, point.x).toDouble();
+        top = math.min(top, point.y).toDouble();
+        right = math.max(right, point.x).toDouble();
+        bottom = math.max(bottom, point.y).toDouble();
+      }
+      return left >= area.left &&
+          top >= area.top &&
+          right <= area.right &&
+          bottom <= area.bottom;
+    }).toList(growable: false);
+    return DrawDocument(elements: elements, assets: document.assets);
+  }
+
   static Future<Uint8List> png(DrawDocument document,
-      {double pixelRatio = 2}) async {
-    final area = bounds(document);
+      {double pixelRatio = 2, Rect? cropBounds}) async {
+    final exportDocument = cropBounds == null
+        ? document
+        : withinBounds(document, cropBounds);
+    final strokePadding = exportDocument.elements.fold<double>(
+      0,
+      (value, element) => math.max(value, element.strokeWidth / 2).toDouble(),
+    );
+    final area = cropBounds == null
+        ? bounds(document)
+        : cropBounds.inflate(strokePadding);
     final width = math.max(1, (area.width * pixelRatio).ceil()).toInt();
     final height = math.max(1, (area.height * pixelRatio).ceil()).toInt();
     if (width > 16000 || height > 16000 || width * height > 100000000) {
@@ -54,7 +83,7 @@ class DocumentExport {
     ui.Picture? picture;
     ui.Image? renderedImage;
     try {
-      for (final element in document.elements) {
+      for (final element in exportDocument.elements) {
         if (element.type != DrawingElementType.image ||
             element.assetId == null ||
             decodedAssets.containsKey(element.assetId)) {
@@ -71,7 +100,7 @@ class DocumentExport {
           codec.dispose();
         }
       }
-      for (final element in document.elements) {
+      for (final element in exportDocument.elements) {
         _paintElement(
           canvas,
           element,
