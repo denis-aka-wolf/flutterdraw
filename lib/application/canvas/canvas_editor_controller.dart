@@ -63,6 +63,7 @@ class CanvasEditorController extends ChangeNotifier {
   int _groupCounter = 0;
   bool _snapToGrid = true;
   bool _snapToGuides = true;
+  bool _relativeLayerMovement = true;
   List<double> _alignmentGuidesX = const [];
   List<double> _alignmentGuidesY = const [];
 
@@ -70,6 +71,7 @@ class CanvasEditorController extends ChangeNotifier {
   bool get canUndo => _historyIndex > 0;
   bool get snapToGrid => _snapToGrid;
   bool get snapToGuides => _snapToGuides;
+  bool get relativeLayerMovement => _relativeLayerMovement;
   List<double> get alignmentGuidesX => List.unmodifiable(_alignmentGuidesX);
   List<double> get alignmentGuidesY => List.unmodifiable(_alignmentGuidesY);
   bool get canGroupSelection => _selectedIds.length >= 2;
@@ -767,6 +769,81 @@ class CanvasEditorController extends ChangeNotifier {
   void duplicateSelection() {
     copySelection();
     paste();
+  }
+
+  void setRelativeLayerMovement(bool value) {
+    if (_relativeLayerMovement == value) return;
+    _relativeLayerMovement = value;
+    notifyListeners();
+  }
+
+  void moveSelectionUp() => _moveSelectionOneStep(forward: true);
+
+  void moveSelectionDown() => _moveSelectionOneStep(forward: false);
+
+  void _moveSelectionOneStep({required bool forward}) {
+    if (_selectedIds.isEmpty) return;
+    final selected = selectedElements;
+    if (selected.isEmpty) return;
+
+    final elements = _document.elements;
+    final selectedIndexes = [
+      for (var i = 0; i < elements.length; i++)
+        if (_selectedIds.contains(elements[i].id)) i,
+    ];
+    if (selectedIndexes.isEmpty) return;
+
+    final selectionBounds = SelectionBounds(
+      selected.map((e) => e.left).reduce(math.min),
+      selected.map((e) => e.top).reduce(math.min),
+      selected.map((e) => e.right).reduce(math.max),
+      selected.map((e) => e.bottom).reduce(math.max),
+    );
+
+    final edgeIndex = forward
+        ? selectedIndexes.reduce(math.max)
+        : selectedIndexes.reduce(math.min);
+    DrawingElement? target;
+    if (forward) {
+      for (var i = edgeIndex + 1; i < elements.length; i++) {
+        final candidate = elements[i];
+        if (_selectedIds.contains(candidate.id)) continue;
+        if (_relativeLayerMovement &&
+            !_intersects(candidate, selectionBounds)) {
+          continue;
+        }
+        target = candidate;
+        break;
+      }
+    } else {
+      for (var i = edgeIndex - 1; i >= 0; i--) {
+        final candidate = elements[i];
+        if (_selectedIds.contains(candidate.id)) continue;
+        if (_relativeLayerMovement &&
+            !_intersects(candidate, selectionBounds)) {
+          continue;
+        }
+        target = candidate;
+        break;
+      }
+    }
+    if (target == null) return;
+
+    final before = _document;
+    final moving = elements.where((e) => _selectedIds.contains(e.id)).toList();
+    final remaining =
+        elements.where((e) => !_selectedIds.contains(e.id)).toList();
+    final targetIndex = remaining.indexWhere((e) => e.id == target!.id);
+    if (targetIndex < 0) return;
+    final insertIndex = forward ? targetIndex + 1 : targetIndex;
+    remaining.insertAll(insertIndex, moving);
+    _document = DrawDocument(
+      elements: remaining,
+      assets: _document.assets,
+      extraData: _document.extraData,
+    );
+    _recordHistory(before);
+    notifyListeners();
   }
 
   void bringSelectionToFront() {
