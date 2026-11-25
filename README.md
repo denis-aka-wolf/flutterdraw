@@ -1,5 +1,9 @@
 # FlutterDraw
 
+<p align="center">
+  <img src="docs/img/logo.png" alt="FlutterDraw logo" width="320">
+</p>
+
 FlutterDraw is a cross-platform hand-drawn whiteboard built with Flutter.
 
 ## Screenshots
