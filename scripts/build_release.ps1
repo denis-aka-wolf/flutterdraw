@@ -62,6 +62,7 @@ if ($MissingFolders.Count -gt 0) {
 }
 
 Invoke-Checked -Command "flutter" -Arguments @("pub", "get") -Description "Installing dependencies"
+Invoke-Checked -Command "dart" -Arguments @("run", "launcher_icons") -Description "Generating application icons"
 Invoke-Checked -Command "flutter" -Arguments @("analyze") -Description "Running static analysis"
 Invoke-Checked -Command "flutter" -Arguments @("test") -Description "Running tests"
 
