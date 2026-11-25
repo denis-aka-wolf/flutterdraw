@@ -9,7 +9,6 @@ dist/
 .metadata
 pubspec.lock
 analysis_options.yaml
-/web/
 /android/
 
 # IDE
@@ -19,7 +18,6 @@ analysis_options.yaml
 
 # Generated platform files
 **/GeneratedPluginRegistrant.*
-/windows/
 
 # Signing and local configuration
 *.jks
