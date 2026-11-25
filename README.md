@@ -1,5 +1,9 @@
 # FlutterDraw
 
+<p align="center">
+  <img src="docs/img/logo.png" alt="FlutterDraw logo" width="320">
+</p>
+
 FlutterDraw is a cross-platform hand-drawn whiteboard built with Flutter.
 
 ## Screenshots
@@ -67,6 +71,7 @@ FlutterDraw is under active development. The current application includes:
 ## Documentation
 
 - [Project Wiki](https://github.com/denis-aka-wolf/flutterdraw/wiki) - guides, project pages and development documentation.
+- [Branding and app icons](docs/BRANDING.md) - logo usage and launcher icon generation.
 - [User guide](docs/USER_GUIDE.md) - canvas tools, editing, files, autosave and keyboard shortcuts.
 - [Architecture](docs/ARCHITECTURE.md) - modules, document model and implementation roadmap.
 - [Local release build guide](docs/BUILDING_RELEASES.md) - build Windows, Android and Web packages without GitHub Actions.
